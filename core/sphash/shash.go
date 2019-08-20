@@ -5,44 +5,57 @@ import (
 )
 
 type Mapping struct {
-	hash  *Hash
-	deep  uint
 	key   string
 	value string
-	node  map[string]*Mapping
+	next  *Mapping
 }
 type Hash struct {
 	isExists bool
 	hsa      uint
 	hsb      uint
-	node     map[string]string
+	node     *Mapping
 }
 
 var cryptTable [0x500]uint   //TODO 用于算出hash值得数组
 var verticalTable [256]*Hash //TODO 用于存放hash 取余过后 得数值
-func NewMapping() *Mapping {
-	PrepareCryptTable()
-	return new(Mapping)
-}
-func NewNode(h *Hash, k string, v string, d uint) *Mapping {
+func NewMapping(k, v string) *Mapping {
 	return &Mapping{
-		hash:  h,
-		deep:  d,
 		key:   k,
 		value: v,
-		node:  make(map[string]*Mapping),
+		next:  nil,
 	}
 }
-func (m *Mapping) Set(key string, value string) {
+func Set(key string, value string) {
 	_, k := GetHashPos([]rune(key))
-	if verticalTable[k].node == nil {
-		verticalTable[k].node = make(map[string]string)
+	//if verticalTable[k] ==nil{
+	//	verticalTable[k] = &Hash{
+	//		isExists: true,
+	//		hsa:      d.hsa,
+	//		hsb:      d.hsb,
+	//		node:    NewMapping(key,value),
+	//	}
+	//}
+	var p = verticalTable[k].node
+	for {
+		if p == nil {
+			p = NewMapping(key, value)
+			verticalTable[k].node = p
+			break
+		} else {
+			p = p.next
+		}
 	}
-	verticalTable[k].node[key] = value
 }
-func (m *Mapping) Get(key string) string {
+func Get(key string) *Mapping {
 	_, k := GetHashPos([]rune(key))
-	return verticalTable[k].node[key]
+	var p = verticalTable[k].node
+	for {
+		if p.key == key || p == nil {
+			break
+		}
+		p = p.next
+	}
+	return p
 }
 
 func PrepareCryptTable() {
@@ -109,6 +122,7 @@ func GetHashPos(str []rune) (*Hash, uint) { //TODO 需要将计算过的hash值�
 		isExists: true,
 		hsa:      nHashA,
 		hsb:      nHashB,
+		node:     nil,
 	}
 	return verticalTable[nHashPos], nHashPos
 
