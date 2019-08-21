@@ -1,5 +1,7 @@
-# spruce
-高性能分布式key-value数据库 High Performance Distributed Key-value Database
-## 我们使用多种高速算法 We use more storage structures
+# **云杉** Spruce
+High Performance Distributed Key-value Database
+## We use many kinds of high performance algorithms
 * High performance hash storage algorithm
+  * Blizzard Hash
+  * Fast Search Algorithms
 * Consistent hashing algorithm (Virtual Node)
