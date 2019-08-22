@@ -1,21 +1,21 @@
 package sphash
 
 import (
-	"log"
 	"strings"
 )
 
 type Node struct {
 	key   string
 	value string
-	deep  int
 	next  *Node
 }
 type Hash struct {
 	isExists bool
 	hsa      uint
 	hsb      uint
-	node     *Node
+	deep     int
+	start    *Node
+	end      *Node
 }
 
 var cryptTable [0x500]uint   //TODO 用于算出hash值得数组
@@ -44,36 +44,22 @@ func NewNode(k, v string, deep int) *Node {
 	return &Node{
 		key:   k,
 		value: v,
-		deep:  deep,
 	}
 }
 func Set(key string, value string) {
-	d, k := GetHashPos([]rune(key))
-	if verticalTable[k].node == nil {
-		verticalTable[k] = &Hash{
-			isExists: true,
-			hsa:      d.hsa,
-			hsb:      d.hsb,
-			node:     NewNode(key, value, 0),
-		}
+	obj, _ := GetHashPos([]rune(key))
+
+	newNode := NewNode(key, value, obj.deep+1)
+	if obj.deep == 0 {
+		obj.start = newNode
+		obj.end = newNode
+	} else {
+		lastPost := obj.end
+		lastPost.next = newNode
+		obj.end = newNode
 	}
-	nd := verticalTable[k].node
-	node := &Node{
-		key:   key,
-		value: value,
-		deep:  nd.deep + 1,
-	}
-	log.Println(nd)
-	for {
-		if IsEmpty(nd) {
-			nd = node
-			break
-		} else {
-			nd.next = nd
-		}
-	}
-	//nd = node
-	log.Println(nd)
+	obj.deep++
+	//TODO 去这个网站 https://studygolang.com/articles/12686
 }
 func Get(key string) *Node {
 	return nil
@@ -143,7 +129,9 @@ func GetHashPos(str []rune) (*Hash, uint) { //TODO 需要将计算过的hash值�
 		isExists: true,
 		hsa:      nHashA,
 		hsb:      nHashB,
-		node:     nil,
+		deep:     0,
+		start:    nil,
+		end:      nil,
 	}
 	return verticalTable[nHashPos], nHashPos
 
