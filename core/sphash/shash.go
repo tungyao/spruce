@@ -1,61 +1,82 @@
 package sphash
 
 import (
+	"log"
 	"strings"
 )
 
-type Mapping struct {
+type Node struct {
 	key   string
 	value string
-	next  *Mapping
+	deep  int
+	next  *Node
 }
 type Hash struct {
 	isExists bool
 	hsa      uint
 	hsb      uint
-	node     *Mapping
+	node     *Node
 }
 
 var cryptTable [0x500]uint   //TODO 用于算出hash值得数组
 var verticalTable [256]*Hash //TODO 用于存放hash 取余过后 得数值
-func NewMapping(k, v string) *Mapping {
-	return &Mapping{
+func IsEmpty(node *Node) bool {
+	return node == nil
+}
+func IsLast(node *Node) bool {
+	return node.next == nil
+}
+func FindPrevious(key string, value string, node *Node) *Node {
+	tmp := node
+	for tmp.next != nil && tmp.next.key != key {
+		tmp = tmp.next
+	}
+	return tmp
+}
+func Find(key string, node *Node) *Node {
+	tmp := node
+	for tmp.key != key {
+		tmp = tmp.next
+	}
+	return tmp
+}
+func NewNode(k, v string, deep int) *Node {
+	return &Node{
 		key:   k,
 		value: v,
-		next:  nil,
+		deep:  deep,
 	}
 }
 func Set(key string, value string) {
-	_, k := GetHashPos([]rune(key))
-	//if verticalTable[k] ==nil{
-	//	verticalTable[k] = &Hash{
-	//		isExists: true,
-	//		hsa:      d.hsa,
-	//		hsb:      d.hsb,
-	//		node:    NewMapping(key,value),
-	//	}
-	//}
-	var p = verticalTable[k].node
+	d, k := GetHashPos([]rune(key))
+	if verticalTable[k].node == nil {
+		verticalTable[k] = &Hash{
+			isExists: true,
+			hsa:      d.hsa,
+			hsb:      d.hsb,
+			node:     NewNode(key, value, 0),
+		}
+	}
+	nd := verticalTable[k].node
+	node := &Node{
+		key:   key,
+		value: value,
+		deep:  nd.deep + 1,
+	}
+	log.Println(nd)
 	for {
-		if p == nil {
-			p = NewMapping(key, value)
-			verticalTable[k].node = p
+		if IsEmpty(nd) {
+			nd = node
 			break
 		} else {
-			p = p.next
+			nd.next = nd
 		}
 	}
+	//nd = node
+	log.Println(nd)
 }
-func Get(key string) *Mapping {
-	_, k := GetHashPos([]rune(key))
-	var p = verticalTable[k].node
-	for {
-		if p.key == key || p == nil {
-			break
-		}
-		p = p.next
-	}
-	return p
+func Get(key string) *Node {
+	return nil
 }
 
 func PrepareCryptTable() {
