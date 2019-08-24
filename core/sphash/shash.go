@@ -101,7 +101,7 @@ func HashString(str []rune, hashtype uint) uint {
 	}
 	return seed1
 }
-func GetHashPos(str []rune) (*Hash, uint) { //TODO 需要将计算过的hash值取余放入数组中
+func GetHashPos(str []rune) (Hash, uint) { //TODO 需要将计算过的hash值取余放入数组中
 	var (
 		HashOffset uint = 0
 		HashA      uint = 1
@@ -115,13 +115,13 @@ func GetHashPos(str []rune) (*Hash, uint) { //TODO 需要将计算过的hash值�
 	for i := 0; i < len(verticalTable); i++ {
 		if verticalTable[nHashPos] != nil {
 			if verticalTable[nHashPos].hsa == nHashA && verticalTable[nHashPos].hsb == nHashB {
-				return verticalTable[nHashPos], nHashPos
+				return *verticalTable[nHashPos], nHashPos
 			} else {
 				nHashPos = (nHashPos + 1) % 256
 
 			}
 			if nHashPos == nHashStart {
-				return nil, nHashPos
+				return *verticalTable[nHashPos], nHashPos
 			}
 		}
 	}
@@ -133,6 +133,6 @@ func GetHashPos(str []rune) (*Hash, uint) { //TODO 需要将计算过的hash值�
 		start:    nil,
 		end:      nil,
 	}
-	return verticalTable[nHashPos], nHashPos
+	return *verticalTable[nHashPos], nHashPos
 
 }

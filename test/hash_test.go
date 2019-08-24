@@ -7,9 +7,9 @@ import (
 
 func TestHash(t *testing.T) {
 	sphash.PrepareCryptTable()
-	sphash.Set("USERA", "PASSWORD")
-	sphash.Set("USERB", "PASSWORD")
-	sphash.Set("USERC", "PASSWORD")
+	sphash.Set("USERA", "123")
+	sphash.Set("USERA", "123123")
+	sphash.Set("USERB", "123123123")
 	//t.Log(sphash.Get("USERB"))
 	//for i := 0; i < 10000000; i++ {
 	//	sphash.Set(string(rand.Int()), "ab"+string(i+i))
