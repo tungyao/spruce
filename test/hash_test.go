@@ -1,25 +1,32 @@
 package test
 
 import (
-	"../core/sphash"
+	"../../spruce"
+	"math/rand"
+	"strconv"
 	"testing"
 )
 
 func TestHash(t *testing.T) {
-	sphash.PrepareCryptTable()
-	sphash.Set("USERA", "123")
-	sphash.Set("USERA", "123123")
-	sphash.Set("USERA", "123123123")
-	sphash.Set("USERB", "123123123")
-	//t.Log(sphash.Get("USERB"))
-	//for i := 0; i < 10000000; i++ {
-	//	sphash.Set(string(rand.Int()), "ab"+string(i+i))
+	h := spruce.CreateHash(512)
+	for i := 0; i < 100000; i++ {
+		h.Set(strconv.Itoa(i), strconv.Itoa(i), 7000)
+	}
+	for i := 0; i < 100; i++ {
+		h.Delete(strconv.Itoa(i))
+	}
+	for i := 0; i < 100000; i++ {
+		if h.Get(strconv.Itoa(i)) == "" {
+			t.Log(i)
+		}
+	}
+}
+func TestGHash(t *testing.T) {
+	hash := make(map[string]string, 10240)
+	for i := 0; i < 100000; i++ {
+		hash[strconv.Itoa(i+rand.Int())] = strconv.Itoa(i)
+	}
+	//for i := 0; i < 100000; i++ {
+	//	t.Log(hash[strconv.Itoa(i)+"abc"])
 	//}
-	//for i := 0; i < 10; i++ {
-	//	t.Log(sphash.Get(string(rand.Int())))
-	//}
-	//var data [10000000]*Data
-	//var ptr *Data
-	//time.Sleep(time.Second*1)
-	//_, _ = fmt.Scan()
 }
