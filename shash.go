@@ -1,6 +1,7 @@
 package spruce
 
 import (
+	"sync"
 	"time"
 )
 
@@ -16,6 +17,7 @@ type hash struct {
 	cry   []uint
 	ver   []*node
 	clone int
+	mux   sync.Mutex
 }
 
 func CreateHash(n int) *hash {
@@ -65,6 +67,8 @@ func del(key string, node *node) *node {
 }
 func (h *hash) Delete(key string) {
 	pos := h.getHashPos([]rune(key))
+	h.mux.Lock()
+	defer h.mux.Unlock()
 	h.ver[pos] = del(key, h.ver[pos])
 }
 func find(key string, node *node) string {
@@ -103,6 +107,8 @@ func newNode(k, v string, deep int, exptime int64) *node {
 func (h *hash) Set(key string, value string, expTime int64) int {
 	pos := h.getHashPos([]rune(key))
 	d := h.ver[pos]
+	h.mux.Lock()
+	defer h.mux.Unlock()
 	if d == nil {
 		h.ver[pos] = newNode(key, value, 0, expTime)
 		return int(pos)
