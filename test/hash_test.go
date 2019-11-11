@@ -5,25 +5,21 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestHash(t *testing.T) {
 	h := spruce.CreateHash(512)
-	for i := 0; i < 100000; i++ {
-		h.Set(strconv.Itoa(i), strconv.Itoa(i), 7000)
-	}
-	for i := 0; i < 100; i++ {
-		h.Delete(strconv.Itoa(i))
-	}
-	for i := 0; i < 100000; i++ {
-		if h.Get(strconv.Itoa(i)) == "" {
-			t.Log(i)
-		}
-	}
+	//for i := 0; i < 100; i++ {
+	//	h.Set(strconv.Itoa(i+rand.Int()), strconv.Itoa(i),7000)
+	//}
+	h.Set("hello", "world", 2)
+	time.Sleep(time.Second*3)
+	t.Log(h.Get("hello"))
 }
 func TestGHash(t *testing.T) {
 	hash := make(map[string]string, 10240)
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 10240; i++ {
 		hash[strconv.Itoa(i+rand.Int())] = strconv.Itoa(i)
 	}
 	//for i := 0; i < 100000; i++ {
