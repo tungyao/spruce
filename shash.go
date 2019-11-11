@@ -1,9 +1,6 @@
 package spruce
 
-import (
-	"sync"
-	"time"
-)
+import "time"
 
 type node struct {
 	key   string
@@ -17,7 +14,6 @@ type hash struct {
 	cry   []uint
 	ver   []*node
 	clone int
-	mux   sync.Mutex
 }
 
 func CreateHash(n int) *hash {
@@ -45,38 +41,9 @@ func CreateHash(n int) *hash {
 		ver: verticalTable,
 	}
 }
-func del(key string, node *node) *node {
-	tmp := node
-	if tmp == nil {
-		return nil
-	}
-	if tmp.key == key {
-		node = tmp.next
-		return node
-	}
-	for tmp != nil {
-		if tmp.key == key {
-			tmp = tmp.next
-			break
-		} else {
-			tmp = tmp.next
-			continue
-		}
-	}
-	return tmp
-}
-func (h *hash) Delete(key string) {
-	pos := h.getHashPos([]rune(key))
-	h.mux.Lock()
-	defer h.mux.Unlock()
-	h.ver[pos] = del(key, h.ver[pos])
-}
 func find(key string, node *node) string {
 	tmp := node
-	if tmp == nil {
-		return ""
-	}
-	if time.Now().Unix()-tmp.at > tmp.et {
+	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
 		return ""
 	}
 	for tmp != nil {
@@ -86,11 +53,7 @@ func find(key string, node *node) string {
 		}
 		break
 	}
-	if tmp != nil {
-		if time.Now().Unix()-tmp.at > tmp.et {
-			return ""
-		}
-	} else {
+	if time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
 		return ""
 	}
 	return tmp.value
@@ -107,8 +70,6 @@ func newNode(k, v string, deep int, exptime int64) *node {
 func (h *hash) Set(key string, value string, expTime int64) int {
 	pos := h.getHashPos([]rune(key))
 	d := h.ver[pos]
-	h.mux.Lock()
-	defer h.mux.Unlock()
 	if d == nil {
 		h.ver[pos] = newNode(key, value, 0, expTime)
 		return int(pos)
