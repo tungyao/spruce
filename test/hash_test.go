@@ -9,12 +9,12 @@ import (
 )
 
 func TestHash(t *testing.T) {
-	h := spruce.CreateHash(512)
+	h := spruce.CreateHash(spruce.Config{})
 	//for i := 0; i < 100; i++ {
 	//	h.Set(strconv.Itoa(i+rand.Int()), strconv.Itoa(i),7000)
 	//}
 	h.Set("hello", "world", 2)
-	time.Sleep(time.Second*3)
+	time.Sleep(time.Second * 3)
 	t.Log(h.Get("hello"))
 }
 func TestGHash(t *testing.T) {

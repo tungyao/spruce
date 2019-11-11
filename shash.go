@@ -1,6 +1,8 @@
 package spruce
 
-import "time"
+import (
+	"time"
+)
 
 type node struct {
 	key   string
@@ -15,10 +17,20 @@ type hash struct {
 	ver   []*node
 	clone int
 }
+type Config struct {
+	MinimumCapacity int    `最小容量`
+	IsDCS           bool   `是否开启分布式`
+	DCSConfigFile   string `分布式式的配置文件路径`
+}
 
-func CreateHash(n int) *hash {
-	cryptTable := make([]uint, n)
-	verticalTable := make([]*node, n)
+func CreateHash(config2 Config) *hash {
+	CheckConfig(&config2, Config{
+		MinimumCapacity: 512,
+		IsDCS:           false,
+		DCSConfigFile:   "",
+	})
+	cryptTable := make([]uint, config2.MinimumCapacity)
+	verticalTable := make([]*node, config2.MinimumCapacity)
 	var (
 		seed   uint = 0x00100001
 		index1      = 0
