@@ -1,6 +1,7 @@
 package spruce
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -55,11 +56,7 @@ func setAllDNode(c []DNode) *Slot {
 	}
 	return &Slot{Count: len(c), Face: c[0], Other: c[1:], All: c, cry: cryptTable}
 }
-func StartSpruceDistributed(config Config) *Slot {
-	CheckConfig(&config, Config{
-		ConfigType:    FILE,
-		DCSConfigFile: "./candi.json",
-	})
+func New() *Slot {
 	n := []DNode{{
 		Name:  "",
 		IP:    "127.0.0.1:80",
@@ -73,8 +70,15 @@ func StartSpruceDistributed(config Config) *Slot {
 		IP:    "127.0.0.1:83",
 		Weigh: 3,
 	}}
-	go client(config.Test)
 	return setAllDNode(n)
+
+}
+func StartSpruceDistributed(config Config) {
+	CheckConfig(&config, Config{
+		ConfigType:    FILE,
+		DCSConfigFile: "./candi.json",
+	})
+	client(config.Test)
 }
 func client(addr string) {
 	a, err := net.Listen("tcp", addr)
@@ -83,9 +87,15 @@ func client(addr string) {
 		return
 	}
 	for {
-		c, _ := a.Accept()
-		c.Write([]byte(balala.Get(string(GetData(c)))))
-		c.Close()
+		c, err := a.Accept()
+		if err != nil {
+			log.Println(err)
+		}
+		_, err = c.Write([]byte(balala.Get(string(GetData(c)))))
+		if err != nil {
+			log.Println(err)
+		}
+		err = c.Close()
 	}
 }
 func (s *Slot) Get(key string) string {
@@ -93,6 +103,7 @@ func (s *Slot) Get(key string) string {
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(key)
 	} else {
+		fmt.Println(s.All[n].IP)
 		return getRemote(s.All[n].IP, key)
 	}
 }
@@ -110,12 +121,13 @@ func GetData(a net.Conn) []byte {
 	out := make([][]byte, 0)
 	o := make([]byte, 0)
 	for {
-		data := make([]byte, 4096)
+		data := make([]byte, 1024)
 		n, err := a.Read(data)
-		out = append(out, data)
+		out = append(out, data[:n])
 		if n == 0 || err == io.EOF {
 			break
 		}
+
 	}
 	for _, v := range out {
 		for _, j := range v {
@@ -125,6 +137,7 @@ func GetData(a net.Conn) []byte {
 			o = append(o, j)
 		}
 	}
+	log.Println(string(o))
 	return o
 }
 func (s *Slot) hashString(str []rune, hashcode uint) uint {
