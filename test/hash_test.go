@@ -9,7 +9,7 @@ import (
 )
 
 func TestHash(t *testing.T) {
-	h := spruce.CreateHash(spruce.Config{})
+	h := spruce.CreateHash(512)
 	//for i := 0; i < 100; i++ {
 	//	h.Set(strconv.Itoa(i+rand.Int()), strconv.Itoa(i),7000)
 	//}

@@ -1,4 +1,4 @@
-# **云杉** Spruce
+# Spruce
 High Performance Distributed Key-value Database
 ## We use many kinds of high performance algorithms
 * High performance hash storage algorithm

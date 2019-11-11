@@ -17,20 +17,10 @@ type hash struct {
 	ver   []*node
 	clone int
 }
-type Config struct {
-	MinimumCapacity int    `最小容量`
-	IsDCS           bool   `是否开启分布式`
-	DCSConfigFile   string `分布式式的配置文件路径`
-}
 
-func CreateHash(config2 Config) *hash {
-	CheckConfig(&config2, Config{
-		MinimumCapacity: 512,
-		IsDCS:           false,
-		DCSConfigFile:   "",
-	})
-	cryptTable := make([]uint, config2.MinimumCapacity)
-	verticalTable := make([]*node, config2.MinimumCapacity)
+func CreateHash(n int) *hash {
+	cryptTable := make([]uint, n)
+	verticalTable := make([]*node, n)
 	var (
 		seed   uint = 0x00100001
 		index1      = 0
@@ -80,7 +70,7 @@ func newNode(k, v string, deep int, exptime int64) *node {
 	}
 }
 func (h *hash) Set(key string, value string, expTime int64) int {
-	pos := h.getHashPos([]rune(key))
+	pos := h.GetHashPos([]rune(key))
 	d := h.ver[pos]
 	if d == nil {
 		h.ver[pos] = newNode(key, value, 0, expTime)
@@ -98,7 +88,7 @@ func (h *hash) Set(key string, value string, expTime int64) int {
 	return int(pos)
 }
 func (h *hash) Get(key string) string {
-	pos := h.getHashPos([]rune(key))
+	pos := h.GetHashPos([]rune(key))
 	return find(key, h.ver[pos])
 }
 func (h *hash) hashString(str []rune, hashcode uint) uint {
@@ -115,7 +105,7 @@ func (h *hash) hashString(str []rune, hashcode uint) uint {
 	}
 	return seed1
 }
-func (h *hash) getHashPos(str []rune) uint {
+func (h *hash) GetHashPos(str []rune) uint {
 	var (
 		hOffset  uint = 0
 		hashA    uint = 1
