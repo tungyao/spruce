@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
+	"strconv"
 )
 
 var (
@@ -20,12 +22,13 @@ const (
 type Config struct {
 	ConfigType    int    `配置方式`
 	DCSConfigFile string `分布式的配置文件路径`
-	Test          string
+	Addr          string
 }
 type DNode struct {
 	Name  string
 	IP    string
 	Weigh int
+	Pwd   string
 }
 type Slot struct {
 	Count int
@@ -56,46 +59,96 @@ func setAllDNode(c []DNode) *Slot {
 	}
 	return &Slot{Count: len(c), Face: c[0], Other: c[1:], All: c, cry: cryptTable}
 }
-func New() *Slot {
-	n := []DNode{{
-		Name:  "",
-		IP:    "127.0.0.1:80",
-		Weigh: 1,
-	}, {
-		Name:  "",
-		IP:    "127.0.0.1:81",
-		Weigh: 2,
-	}, {
-		Name:  "",
-		IP:    "127.0.0.1:83",
-		Weigh: 3,
-	}}
-	return setAllDNode(n)
+func New(config Config) *Slot {
+	CheckConfig(&config, Config{
+		ConfigType:    FILE,
+		DCSConfigFile: "./",
+		Addr:          "./",
+	})
+	return setAllDNode(ParseConfigFile(config.DCSConfigFile))
 
 }
 func StartSpruceDistributed(config Config) {
 	CheckConfig(&config, Config{
 		ConfigType:    FILE,
-		DCSConfigFile: "./candi.json",
+		DCSConfigFile: "./spruce.spe",
+		Addr:          ":9102",
 	})
-	client(config.Test)
+	fmt.Print(`
+
+ ________       ________    ________      ___  ___      ________      _______      
+|\   ____\     |\   __  \  |\   __  \    |\  \|\  \    |\   ____\    |\  ___ \     
+\ \  \___|_    \ \  \|\  \ \ \  \|\  \   \ \  \\\  \   \ \  \___|    \ \   __/|    
+ \ \_____  \    \ \   ____\ \ \   _  _\   \ \  \\\  \   \ \  \        \ \  \_|/__  
+  \|____|\  \    \ \  \___|  \ \  \\  \|   \ \  \\\  \   \ \  \____    \ \  \_|\ \ 
+    ____\_\  \    \ \__\      \ \__\\ _\    \ \_______\   \ \_______\   \ \_______\
+   |\_________\    \|__|       \|__|\|__|    \|_______|    \|_______|    \|_______|
+   \|_________|
+
+`)
+	fmt.Print(`
+Spruce is distributed key-value data based on go. 
+Of course, we built it in an embedded way 
+at the beginning of the design. You can alsso 
+use ordinary map functions as easily `)
+	client(config)
 }
-func client(addr string) {
-	a, err := net.Listen("tcp", addr)
+func initDNode(p string) *Slot {
+	d := ParseConfigFile(p)
+	fmt.Print("\n\nrunning server\n")
+	fmt.Print("id", "\t", "name", "\t", "ip", "\t", "weigh", "\n")
+	for k, v := range d {
+		fmt.Print(k, "\t", v.Name, "\t", v.IP, "\t", v.Weigh, "\n")
+	}
+	return setAllDNode(d)
+}
+func client(config Config) {
+	slot := initDNode(config.DCSConfigFile)
+	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	slot.Face.IP = config.Addr
+	fmt.Println("\n\nserver is listening =>", a.Addr().String())
+	fmt.Println("server is running   =>", os.Getpid())
 	for {
 		c, err := a.Accept()
 		if err != nil {
 			log.Println(err)
 		}
-		_, err = c.Write([]byte(balala.Get(string(GetData(c)))))
-		if err != nil {
-			log.Println(err)
-		}
-		err = c.Close()
+		go func(c net.Conn) {
+			data := make([]byte, 1024)
+			n, err := c.Read(data)
+			str := SplitString(data[:n], []byte("**"))
+			msg := ""
+			switch string(str[0]) {
+			case "get":
+				msg = slot.Get(string(str[1]))
+			case "set":
+
+				if len(str) == 3 {
+					slot.Set(string(str[1]), string(str[2]), 0)
+					msg = "1"
+				} else if len(str) == 4 {
+					ns, err := strconv.Atoi(string(str[3]))
+					if err == nil {
+						slot.Set(string(str[1]), string(str[2]), ns)
+						msg = "1"
+					} else {
+						msg = ""
+					}
+				}
+			default:
+				msg = ""
+			}
+			_, err = c.Write([]byte(msg))
+			if err != nil {
+				log.Println(err)
+			}
+			err = c.Close()
+		}(c)
+
 	}
 }
 func (s *Slot) Get(key string) string {
@@ -103,18 +156,28 @@ func (s *Slot) Get(key string) string {
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(key)
 	} else {
-		fmt.Println(s.All[n].IP)
-		return getRemote(s.All[n].IP, key)
+		return getRemote([]byte("get**"+key), s.All[n].IP)
 	}
 }
-func getRemote(ip string, key string) string {
+func (s *Slot) Set(n ...interface{}) string {
+
+	key := n[0].(string)
+	value := n[1].(string)
+	ns := s.getHashPos([]rune(key))
+	if s.All[ns].IP == s.Face.IP {
+		return string(balala.Set(key, value, int64(n[2].(int))))
+	} else {
+		return getRemote([]byte("set**"+key+"**"+value+"**"+strconv.Itoa(n[2].(int))), s.All[ns].IP)
+	}
+}
+func getRemote(lang []byte, ip string) string {
 	con, err := net.Dial("tcp", ip)
 	if err != nil {
-		log.Println(err)
+		log.Println(181, err)
 		return ""
 	}
 	defer con.Close()
-	con.Write([]byte(key))
+	con.Write(lang)
 	return string(GetData(con))
 }
 func GetData(a net.Conn) []byte {
@@ -127,7 +190,6 @@ func GetData(a net.Conn) []byte {
 		if n == 0 || err == io.EOF {
 			break
 		}
-
 	}
 	for _, v := range out {
 		for _, j := range v {
@@ -137,7 +199,6 @@ func GetData(a net.Conn) []byte {
 			o = append(o, j)
 		}
 	}
-	log.Println(string(o))
 	return o
 }
 func (s *Slot) hashString(str []rune, hashcode uint) uint {
@@ -165,4 +226,71 @@ func (s *Slot) getHashPos(str []rune) uint {
 		nHashPos uint = (nHash + nHashA + nHashB) % uint(s.Count)
 	)
 	return nHashPos
+}
+func ParseConfigFile(path string) []DNode {
+	f, err := os.Open(path)
+	defer f.Close()
+	if err != nil {
+		log.Println("open config file error", err)
+	}
+	stat, _ := f.Stat()
+	get := make([]byte, stat.Size())
+	_, err = f.Read(get)
+	if err != nil {
+		log.Panic(err)
+	}
+	isgroup := false
+	str := make([]byte, 0)
+	dn := make([]DNode, 0)
+	for i := 0; i < len(get); i++ {
+		if get[i] == 32 {
+			continue
+		}
+		if get[i] == 123 {
+			isgroup = true
+		}
+		if get[i] == 125 {
+			isgroup = false
+		}
+		if isgroup && get[i] != 123 {
+			str = append(str, get[i])
+		}
+	}
+	group := SplitString(str, []byte("\n\n"))
+	// 到这一部可以开始解析数据到出来
+	for _, v := range group {
+		ds := DNode{}
+		column := SplitString(v, []byte("\n"))
+		for _, j := range column {
+			name := FindString(j, []byte("name="))
+			if name != nil {
+				ds.Name = string(name.([]uint8))
+			}
+			ip := FindString(j, []byte("ip="))
+			if ip != nil {
+				ds.IP = string(ip.([]uint8))
+			}
+			password := FindString(j, []byte("password="))
+			if password != nil {
+				ds.Pwd = string(password.([]uint8))
+			}
+			weight := FindString(j, []byte("weight="))
+			if weight != nil {
+				s := weight.([]uint8)
+				str := make([]byte, 0)
+				for _, v := range s {
+					if v <= 57 && v >= 48 {
+						str = append(str, v)
+					}
+				}
+				d, err := strconv.Atoi(string(str))
+				if err != nil {
+					log.Panicln(err)
+				}
+				ds.Weigh = d
+			}
+		}
+		dn = append(dn, ds)
+	}
+	return dn
 }
