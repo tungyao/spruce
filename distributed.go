@@ -120,13 +120,12 @@ func client(config Config) {
 		go func(c net.Conn) {
 			data := make([]byte, 1024)
 			n, err := c.Read(data)
-			str := SplitString(data[:n], []byte("**"))
+			str := SplitString(data[:n], []byte("*$"))
 			msg := ""
 			switch string(str[0]) {
 			case "get":
 				msg = slot.Get(string(str[1]))
 			case "set":
-
 				if len(str) == 3 {
 					slot.Set(string(str[1]), string(str[2]), 0)
 					msg = "1"
@@ -156,7 +155,7 @@ func (s *Slot) Get(key string) string {
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(key)
 	} else {
-		return getRemote([]byte("get**"+key), s.All[n].IP)
+		return getRemote([]byte("get*$"+key), s.All[n].IP)
 	}
 }
 func (s *Slot) Set(n ...interface{}) string {
@@ -167,7 +166,7 @@ func (s *Slot) Set(n ...interface{}) string {
 	if s.All[ns].IP == s.Face.IP {
 		return string(balala.Set(key, value, int64(n[2].(int))))
 	} else {
-		return getRemote([]byte("set**"+key+"**"+value+"**"+strconv.Itoa(n[2].(int))), s.All[ns].IP)
+		return getRemote([]byte("set*$"+key+"*$"+value+"*$"+strconv.Itoa(n[2].(int))), s.All[ns].IP)
 	}
 }
 func getRemote(lang []byte, ip string) string {
