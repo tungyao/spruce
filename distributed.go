@@ -23,6 +23,7 @@ type Config struct {
 	ConfigType    int    `配置方式`
 	DCSConfigFile string `分布式的配置文件路径`
 	Addr          string
+	KeepAlive     bool
 }
 type DNode struct {
 	Name  string
@@ -63,7 +64,8 @@ func New(config Config) *Slot {
 	CheckConfig(&config, Config{
 		ConfigType:    FILE,
 		DCSConfigFile: "./",
-		Addr:          "./",
+		Addr:          "0.0.0.0:9102",
+		KeepAlive:     false,
 	})
 	return setAllDNode(ParseConfigFile(config.DCSConfigFile))
 
@@ -74,22 +76,19 @@ func StartSpruceDistributed(config Config) {
 		DCSConfigFile: "./spruce.spe",
 		Addr:          ":9102",
 	})
+	fmt.Println(config)
 	fmt.Print(`
-
- ________       ________    ________      ___  ___      ________      _______      
-|\   ____\     |\   __  \  |\   __  \    |\  \|\  \    |\   ____\    |\  ___ \     
-\ \  \___|_    \ \  \|\  \ \ \  \|\  \   \ \  \\\  \   \ \  \___|    \ \   __/|    
- \ \_____  \    \ \   ____\ \ \   _  _\   \ \  \\\  \   \ \  \        \ \  \_|/__  
-  \|____|\  \    \ \  \___|  \ \  \\  \|   \ \  \\\  \   \ \  \____    \ \  \_|\ \ 
-    ____\_\  \    \ \__\      \ \__\\ _\    \ \_______\   \ \_______\   \ \_______\
-   |\_________\    \|__|       \|__|\|__|    \|_______|    \|_______|    \|_______|
-   \|_________|
-
+  ___ _ __  _ __ _   _  ___ ___ 
+ / __| '_ \| '__| | | |/ __/ _ \
+ \__ \ |_) | |  | |_| | (_|  __/
+ |___/ .__/|_|   \__,_|\___\___|
+     | |                        
+     |_|                        
 `)
 	fmt.Print(`
 Spruce is distributed key-value data based on go. 
 Of course, we built it in an embedded way 
-at the beginning of the design. You can alsso 
+at the beginning of the design. You can also 
 use ordinary map functions as easily `)
 	client(config)
 }
@@ -104,6 +103,75 @@ func initDNode(p string) *Slot {
 }
 func client(config Config) {
 	slot := initDNode(config.DCSConfigFile)
+	//if config.KeepAlive {
+	//	tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
+	//	a, err := net.ListenTCP("tcp", tcpAddr)
+	//	if err != nil {
+	//		log.Println(err)
+	//		return
+	//	}
+	//	slot.Face.IP = config.Addr
+	//	fmt.Println("\n\nserver is listening =>", a.Addr().String())
+	//	fmt.Println("server is running   =>", os.Getpid())
+	//	for {
+	//		c, err := a.AcceptTCP()
+	//		if err !=nil {
+	//		    log.Println(err)
+	//			_ = c.Close()
+	//		}
+	//		go func(c *net.TCPConn) {
+	//			err = c.SetKeepAlive(true)
+	//			if err != nil {
+	//				log.Println(err)
+	//				err  = c.Close()
+	//				if err !=nil {
+	//					log.Println(err)
+	//				}
+	//			}
+	//			data := make([]byte, 1024)
+	//			n, err := c.Read(data)
+	//			if err !=nil {
+	//				log.Println(err)
+	//			}else{
+	//				err = c.CloseRead()
+	//			}
+	//			fmt.Println(string(data))
+	//			str := SplitString(data[:n], []byte("*$"))
+	//			msg := ""
+	//			switch string(str[0]) {
+	//			case "get":
+	//				msg = slot.Get(string(str[1]))
+	//			case "set":
+	//				if len(str) == 3 {
+	//					slot.Set(string(str[1]), string(str[2]), 0)
+	//					msg = "1"
+	//				} else if len(str) == 4 {
+	//					ns, err := strconv.Atoi(string(str[3]))
+	//					if err == nil {
+	//						slot.Set(string(str[1]), string(str[2]), ns)
+	//						msg = "1"
+	//					} else {
+	//						msg = ""
+	//					}
+	//				}
+	//			default:
+	//				msg = ""
+	//			}
+	//			_, err = c.Write([]byte(msg))
+	//			if err != nil {
+	//				log.Println(err)
+	//			}else{
+	//				err = c.CloseWrite()
+	//			}
+	//			//err = c.Close()
+	//			//if err !=nil {
+	//			//    log.Println(err)
+	//			//}
+	//		}(c)
+	//
+	//	}
+	//} else {
+	//tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		log.Println(err)
@@ -114,6 +182,7 @@ func client(config Config) {
 	fmt.Println("server is running   =>", os.Getpid())
 	for {
 		c, err := a.Accept()
+
 		if err != nil {
 			log.Println(err)
 		}
@@ -149,6 +218,8 @@ func client(config Config) {
 		}(c)
 
 	}
+	//}
+
 }
 func (s *Slot) Get(key string) string {
 	n := s.getHashPos([]rune(key))
