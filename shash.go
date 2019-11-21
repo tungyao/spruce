@@ -89,22 +89,23 @@ func (h *hash) Set(key string, value string, expTime int64) int {
 }
 func (h *hash) Get(key string) string {
 	if key == "*" {
-		return findAll(h.ver)
+		return findAll(h.ver, 1)
 	}
 	pos := h.GetHashPos([]rune(key))
 	return find(key, h.ver[pos])
 }
-func findAll(node []*node) string {
-	tmp := node
+func findAll(n []*node, tp int) string {
+	tmp := n
 	s := ""
 	for _, v := range tmp {
 		t := v
 		for t != nil {
-			s += t.key + "\t" + t.value + "\n"
+			s += t.key + "****" + t.value + "\n"
+			//s += t.key + "\t" + t.value + "\n"
 			t = v.next
 		}
 	}
-	return s
+	return ""
 }
 func (h *hash) hashString(str []rune, hashcode uint) uint {
 	var (

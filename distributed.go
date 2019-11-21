@@ -3,15 +3,21 @@ package spruce
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"strconv"
+	"sync"
+	"time"
 )
 
 var (
-	slot   int
-	balala = CreateHash(4096)
+	AllSlot     []DNode
+	slot        int
+	balala      = CreateHash(4096)
+	randomMutex = sync.Mutex{}
 )
 
 const (
@@ -24,6 +30,7 @@ type Config struct {
 	DCSConfigFile string `分布式的配置文件路径`
 	Addr          string
 	KeepAlive     bool
+	IsBackup      bool
 }
 type DNode struct {
 	Name  string
@@ -58,6 +65,7 @@ func setAllDNode(c []DNode) *Slot {
 		cryptTable[index1] = tp1 | tp2
 		i += 1
 	}
+	AllSlot = c
 	return &Slot{Count: len(c), Face: c[0], Other: c[1:], All: c, cry: cryptTable}
 }
 func New(config Config) *Slot {
@@ -243,7 +251,7 @@ func (s *Slot) Set(n ...interface{}) string {
 func getRemote(lang []byte, ip string) string {
 	con, err := net.Dial("tcp", ip)
 	if err != nil {
-		log.Println(181, err)
+		log.Println(252, err)
 		return ""
 	}
 	defer con.Close()
@@ -363,4 +371,88 @@ func ParseConfigFile(path string) []DNode {
 		dn = append(dn, ds)
 	}
 	return dn
+}
+func CreateLocalPWD() []byte {
+	rands := []byte("0123456789abcdefghjiklmnopqrstuvwxyz#$&*_+=")
+	outs := make([]byte, 0)
+	for i := 0; i < 128; i++ {
+		outs = append(outs, rands[getRandomInt(0, len(rands)-1)])
+	}
+	f, err := os.OpenFile("./pass.ewm", os.O_CREATE|os.O_WRONLY, 666)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+	_, err = f.Write(outs)
+	if err != nil {
+		log.Println(err)
+	}
+	return outs
+}
+func Encrypt(string2 []byte) []byte {
+	fs, err := os.OpenFile("./pass.ewm", os.O_RDONLY|os.O_CREATE, 666)
+	if err != nil {
+		log.Panicln(err)
+		os.Exit(0)
+	}
+	defer fs.Close()
+	n1, err := ioutil.ReadAll(fs)
+	if len(n1) == 0 || err != nil {
+		log.Panicln("There is no password in the document", err)
+	}
+
+	for k, v := range string2 {
+		string2[k] = v + n1[len(n1)-1%int(v)]
+	}
+	return string2
+}
+func Decrypt(s []byte) []byte {
+	fs, err := os.OpenFile("./pass.ewm", os.O_RDONLY|os.O_CREATE, 666)
+	if err != nil {
+		log.Println(err)
+	}
+	defer fs.Close()
+	n1, err := ioutil.ReadAll(fs)
+	for k, v := range s {
+		s[k] = v - n1[len(n1)-1%int(v)]
+	}
+	return s
+}
+
+// save memory data to local , default 60s run one ,but you can advance or delay
+func localStorageFile() {
+	allkey := balala.Get("*")
+	fmt.Println(allkey)
+	fs, err := os.OpenFile("./spruce.db", os.O_CREATE|os.O_WRONLY, 666)
+	if err != nil {
+		log.Println(err)
+	}
+	defer fs.Close()
+	_, err = fs.Write(Encrypt([]byte(allkey)))
+}
+
+// 这个b方法怎么写哟 ，不球晓得，TMD
+func remoteStoregeFile() {
+	// 获取所有远程机器
+	oAll := AllSlot
+	// 饭后依次遍历 ，让其他电脑也同事备份
+	for _, v := range oAll {
+		go getRemote([]byte("*"), v.IP)
+	}
+	// 如果不出错，那么其他掉也会同时保存
+}
+
+// 这个方法是用于重置slot ，我们要重新计算 hash槽
+// 实现方法 ,将每台电脑的数组取出来，重新取余，将值转移到对应slot，本机删除，如果计算结果是本机，那么不转移
+
+func ResetSlot() {
+
+}
+func getRandomInt(start, end int) int {
+	randomMutex.Lock()
+	<-time.After(1 * time.Nanosecond)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	n := start + r.Intn(end-start+1)
+	randomMutex.Unlock()
+	return n
 }
