@@ -18,6 +18,8 @@ var (
 	slot        int
 	balala      = CreateHash(4096)
 	randomMutex = sync.Mutex{}
+	mux         sync.Mutex
+	action      chan int // 1 是增加 -1 是减少 // 10个缓冲
 )
 
 const (
@@ -44,6 +46,7 @@ type Slot struct {
 	Other []DNode
 	cry   []uint
 	All   []DNode
+	Mux   sync.Mutex
 }
 
 func setAllDNode(c []DNode) *Slot {
@@ -188,6 +191,7 @@ func client(config Config) {
 	slot.Face.IP = config.Addr
 	fmt.Println("\n\nserver is listening =>", a.Addr().String())
 	fmt.Println("server is running   =>", os.Getpid())
+	go listenAllSlotAction()
 	for {
 		c, err := a.Accept()
 
@@ -214,6 +218,23 @@ func client(config Config) {
 					} else {
 						msg = ""
 					}
+				}
+			case "reset":
+				rWeigh, err := strconv.Atoi(string(str[3]))
+				if err != nil {
+					log.Println(err)
+				} else {
+					rName := string(str[1])
+					rIp := string(str[2])
+					rPwd := string(str[4])
+					p := DNode{
+						Name:  rName,
+						IP:    rIp,
+						Weigh: rWeigh,
+						Pwd:   rPwd,
+					}
+					AllSlot = append(AllSlot, p)
+					action <- 1
 				}
 			default:
 				msg = ""
@@ -442,11 +463,37 @@ func remoteStoregeFile() {
 	// 如果不出错，那么其他掉也会同时保存
 }
 
+// 增加新的插槽
+func AddSlot() {
+
+}
+
+// 删除新的插槽
+func DropSlot() {
+
+}
+
 // 这个方法是用于重置slot ，我们要重新计算 hash槽
 // 实现方法 ,将每台电脑的数组取出来，重新取余，将值转移到对应slot，本机删除，如果计算结果是本机，那么不转移
 
-func ResetSlot() {
+func (s *Slot) ResetSlot(n DNode) {
+	// 首先先把slot给锁住，防止出现混乱
+	s.Mux.Lock()
+	alls := s.All
+	for _, v := range alls {
+		getRemote([]byte("reset*$"+n.Name+"*$"+n.IP+"*$"+strconv.Itoa(n.Weigh)+"*$"+n.Pwd), v.IP)
+	}
+	s.Mux.Unlock()
+}
 
+// 检测slot的变化
+func listenAllSlotAction() {
+	log.Println("start listening SlotAction")
+	for at := range action {
+		if at == 1 {
+
+		}
+	}
 }
 func getRandomInt(start, end int) int {
 	randomMutex.Lock()
