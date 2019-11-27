@@ -13,15 +13,6 @@ import (
 	"time"
 )
 
-var (
-	AllSlot     []DNode
-	slot        int
-	balala      = CreateHash(4096)
-	randomMutex = sync.Mutex{}
-	mux         sync.Mutex
-	action      chan int // 1 是增加 -1 是减少 // 10个缓冲
-)
-
 const (
 	FILE = iota
 	COMMAND
@@ -49,6 +40,18 @@ type Slot struct {
 	Mux   sync.Mutex
 }
 
+var (
+	AllSlot      []DNode
+	slot         int
+	balala       = CreateHash(4096)
+	randomMutex  = sync.Mutex{}
+	mux          sync.Mutex
+	action       chan int // 1 是增加 -1 是减少 // 10个缓冲
+	nMessageRing *MessageRing
+	pMsg         chan msg
+)
+
+// TODO Node
 func setAllDNode(c []DNode) *Slot {
 	cryptTable := make([]uint, 512)
 	var (
@@ -81,6 +84,8 @@ func New(config Config) *Slot {
 	return setAllDNode(ParseConfigFile(config.DCSConfigFile))
 
 }
+
+// TODO Start
 func StartSpruceDistributed(config Config) {
 	CheckConfig(&config, Config{
 		ConfigType:    FILE,
@@ -112,6 +117,8 @@ func initDNode(p string) *Slot {
 	}
 	return setAllDNode(d)
 }
+
+// TODO Client
 func client(config Config) {
 	slot := initDNode(config.DCSConfigFile)
 	//if config.KeepAlive {

@@ -6,8 +6,9 @@ import (
 import "../../spruce"
 
 func TestOther(t *testing.T) {
-	s := spruce.Encrypt([]byte("hello wolrd"))
-	t.Log(string(spruce.Decrypt(s)))
+	//s := spruce.Encrypt([]byte("hello wolrd"))
+	//t.Log(string(spruce.Decrypt(s)))
+	t.Log(string(spruce.CreateLocalPWD()))
 }
 func TestStringToInt(t *testing.T) {
 	a := "12"

@@ -13,10 +13,11 @@ type node struct {
 	deep  int
 }
 type hash struct {
-	cry   []uint
 	ver   []*node
 	clone int
 }
+
+var CRY []uint
 
 func CreateHash(n int) *hash {
 	cryptTable := make([]uint, n)
@@ -38,10 +39,11 @@ func CreateHash(n int) *hash {
 		cryptTable[index1] = tp1 | tp2
 		i += 1
 	}
+	CRY = cryptTable
 	return &hash{
-		cry: cryptTable,
 		ver: verticalTable,
 	}
+
 }
 func find(key string, node *node) string {
 	tmp := node
@@ -116,7 +118,7 @@ func (h *hash) hashString(str []rune, hashcode uint) uint {
 	)
 	for _, v := range key {
 		ch = uint(v)
-		seed1 = h.cry[(hashcode<<2)+ch] ^ (seed1 + seed2)
+		seed1 = CRY[(hashcode<<2)+ch] ^ (seed1 + seed2)
 		seed2 = ch + seed1 + seed2 + (seed2 << 5) + 3
 	}
 	return seed1
@@ -129,7 +131,7 @@ func (h *hash) GetHashPos(str []rune) uint {
 		nHash    uint = h.hashString(str, hOffset)
 		nHashA   uint = h.hashString(str, hashA)
 		nHashB   uint = h.hashString(str, hashB)
-		nHashPos uint = (nHash + nHashA + nHashB) % uint(len(h.cry))
+		nHashPos uint = (nHash + nHashA + nHashB) % uint(len(CRY))
 	)
 	return nHashPos
 }
