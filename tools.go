@@ -88,7 +88,7 @@ func SplitString(str []byte, p []byte) [][]byte {
 				//return [][]byte{str[:i], str[i+1:]}
 			} else {
 				for j := 1; j < len(p); j++ {
-					if str[i+j] != p[j] {
+					if str[i+j] != p[j] || j != len(p)-1 {
 						continue
 					} else {
 						group = append(group, str[ps:i])

@@ -4,4 +4,5 @@ High Performance Distributed Key-value Database
 * High performance hash storage algorithm
   * Blizzard Hash
   * Fast Search Algorithms
-* Consistent hashing algorithm (Virtual Node)
+* Consistent hash slot
+* message queue (ring architecture)

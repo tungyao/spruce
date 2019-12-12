@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"src/github.com/tungyao/ymload"
 	"strconv"
 	"sync"
 	"time"
@@ -89,10 +90,10 @@ func New(config Config) *Slot {
 func StartSpruceDistributed(config Config) {
 	CheckConfig(&config, Config{
 		ConfigType:    FILE,
-		DCSConfigFile: "./spruce.spe",
+		DCSConfigFile: "./spruce.yml",
 		Addr:          ":9102",
 	})
-	fmt.Println(config)
+	//fmt.Println(config)
 	fmt.Print(`
   ___ _ __  _ __ _   _  ___ ___ 
  / __| '_ \| '__| | | |/ __/ _ \
@@ -334,71 +335,92 @@ func (s *Slot) getHashPos(str []rune) uint {
 	return nHashPos
 }
 func ParseConfigFile(path string) []DNode {
-	f, err := os.Open(path)
-	defer f.Close()
-	if err != nil {
-		log.Println("open config file error", err)
-	}
-	stat, _ := f.Stat()
-	get := make([]byte, stat.Size())
-	_, err = f.Read(get)
-	if err != nil {
-		log.Panic(err)
-	}
-	isgroup := false
-	str := make([]byte, 0)
+	fmt.Println(path)
+	yml := ymload.Format(path)
 	dn := make([]DNode, 0)
-	for i := 0; i < len(get); i++ {
-		if get[i] == 32 {
-			continue
-		}
-		if get[i] == 123 {
-			isgroup = true
-		}
-		if get[i] == 125 {
-			isgroup = false
-		}
-		if isgroup && get[i] != 123 {
-			str = append(str, get[i])
-		}
-	}
-	group := SplitString(str, []byte("\n\n"))
-	// 到这一部可以开始解析数据到出来
-	for _, v := range group {
+	for _, v := range yml {
 		ds := DNode{}
-		column := SplitString(v, []byte("\n"))
-		for _, j := range column {
-			name := FindString(j, []byte("name="))
-			if name != nil {
-				ds.Name = string(name.([]uint8))
-			}
-			ip := FindString(j, []byte("ip="))
-			if ip != nil {
-				ds.IP = string(ip.([]uint8))
-			}
-			password := FindString(j, []byte("password="))
-			if password != nil {
-				ds.Pwd = string(password.([]uint8))
-			}
-			weight := FindString(j, []byte("weight="))
-			if weight != nil {
-				s := weight.([]uint8)
-				str := make([]byte, 0)
-				for _, v := range s {
-					if v <= 57 && v >= 48 {
-						str = append(str, v)
-					}
-				}
-				d, err := strconv.Atoi(string(str))
-				if err != nil {
-					log.Panicln(err)
-				}
-				ds.Weigh = d
-			}
+		if v["ip"] != nil {
+			ds.IP = v["ip"].(string)
+		}
+		if v["name"] != nil {
+			ds.Name = v["name"].(string)
+		}
+		if v["weight"] != nil {
+			i, _ := strconv.Atoi(v["weight"].(string))
+			ds.Weigh = i
+		}
+		if v["password"] != nil {
+			ds.Pwd = v["password"].(string)
 		}
 		dn = append(dn, ds)
 	}
 	return dn
+	//f, err := os.Open(path)
+	//defer f.Close()
+	//if err != nil {
+	//	log.Println("open config file error", err)
+	//}
+	//stat, _ := f.Stat()
+	//get := make([]byte, stat.Size())
+	//_, err = f.Read(get)
+	//if err != nil {
+	//	log.Panic(err)
+	//}
+	//isgroup := false
+	//str := make([]byte, 0)
+	//dn := make([]DNode, 0)
+	//for i := 0; i < len(get); i++ {
+	//	if get[i] == 32 {
+	//		continue
+	//	}
+	//	if get[i] == 123 {
+	//		isgroup = true
+	//	}
+	//	if get[i] == 125 {
+	//		isgroup = false
+	//	}
+	//	if isgroup && get[i] != 123 {
+	//		str = append(str, get[i])
+	//	}
+	//}
+	//group := SplitString(str, []byte("\n\n"))
+	//// 到这一部可以开始解析数据到出来
+	//for _, v := range group {
+	//	ds := DNode{}
+	//	column := SplitString(v, []byte("\n"))
+	//	for _, j := range column {
+	//		name := FindString(j, []byte("name="))
+	//		if name != nil {
+	//			ds.Name = string(name.([]uint8))
+	//		}
+	//		ip := FindString(j, []byte("ip="))
+	//		if ip != nil {
+	//			ds.IP = string(ip.([]uint8))
+	//		}
+	//		password := FindString(j, []byte("password="))
+	//		if password != nil {
+	//			ds.Pwd = string(password.([]uint8))
+	//		}
+	//		weight := FindString(j, []byte("weight="))
+	//		if weight != nil {
+	//			s := weight.([]uint8)
+	//			str := make([]byte, 0)
+	//			for _, v := range s {
+	//				if v <= 57 && v >= 48 {
+	//					str = append(str, v)
+	//				}
+	//			}
+	//			d, err := strconv.Atoi(string(str))
+	//			if err != nil {
+	//				log.Panicln(err)
+	//			}
+	//			ds.Weigh = d
+	//		}
+	//	}
+	//	dn = append(dn, ds)
+	//}
+	//return dn
 }
 func CreateLocalPWD() []byte {
 	rands := []byte("0123456789abcdefghjiklmnopqrstuvwxyz#$&*_+=")

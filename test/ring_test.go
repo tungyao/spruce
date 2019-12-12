@@ -2,7 +2,10 @@ package test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -53,7 +56,7 @@ end:
 	fmt.Println(i)
 }
 func TestTime(t *testing.T) {
-	t.Log(92233720368547758071 / (3600 * 24 * 365))
-	var a int64 = 2
-	t.Log(a)
+	fs, _ := os.Open("./config.yml")
+	str, _ := ioutil.ReadAll(fs)
+	fmt.Println(strings.Split(string(str), "\r\n"))
 }
