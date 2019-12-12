@@ -22,7 +22,8 @@ const (
 type Config struct {
 	ConfigType    int    `配置方式`
 	DCSConfigFile string `分布式的配置文件路径`
-	Addr          string
+	Addr          string `跑在哪个端口上`
+	NowIP         string `当前服务器运行的IP地址 暂时必须`
 	KeepAlive     bool
 	IsBackup      bool
 }
@@ -122,81 +123,83 @@ func initDNode(p string) *Slot {
 // TODO Client
 func client(config Config) {
 	slot := initDNode(config.DCSConfigFile)
-	//if config.KeepAlive {
-	//	tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
-	//	a, err := net.ListenTCP("tcp", tcpAddr)
-	//	if err != nil {
-	//		log.Println(err)
-	//		return
-	//	}
-	//	slot.Face.IP = config.Addr
-	//	fmt.Println("\n\nserver is listening =>", a.Addr().String())
-	//	fmt.Println("server is running   =>", os.Getpid())
-	//	for {
-	//		c, err := a.AcceptTCP()
-	//		if err !=nil {
-	//		    log.Println(err)
-	//			_ = c.Close()
-	//		}
-	//		go func(c *net.TCPConn) {
-	//			err = c.SetKeepAlive(true)
-	//			if err != nil {
-	//				log.Println(err)
-	//				err  = c.Close()
-	//				if err !=nil {
-	//					log.Println(err)
-	//				}
-	//			}
-	//			data := make([]byte, 1024)
-	//			n, err := c.Read(data)
-	//			if err !=nil {
-	//				log.Println(err)
-	//			}else{
-	//				err = c.CloseRead()
-	//			}
-	//			fmt.Println(string(data))
-	//			str := SplitString(data[:n], []byte("*$"))
-	//			msg := ""
-	//			switch string(str[0]) {
-	//			case "get":
-	//				msg = slot.Get(string(str[1]))
-	//			case "set":
-	//				if len(str) == 3 {
-	//					slot.Set(string(str[1]), string(str[2]), 0)
-	//					msg = "1"
-	//				} else if len(str) == 4 {
-	//					ns, err := strconv.Atoi(string(str[3]))
-	//					if err == nil {
-	//						slot.Set(string(str[1]), string(str[2]), ns)
-	//						msg = "1"
-	//					} else {
-	//						msg = ""
-	//					}
-	//				}
-	//			default:
-	//				msg = ""
-	//			}
-	//			_, err = c.Write([]byte(msg))
-	//			if err != nil {
-	//				log.Println(err)
-	//			}else{
-	//				err = c.CloseWrite()
-	//			}
-	//			//err = c.Close()
-	//			//if err !=nil {
-	//			//    log.Println(err)
-	//			//}
-	//		}(c)
-	//
-	//	}
-	//} else {
+	slot.Face.IP = config.NowIP
+	if config.KeepAlive {
+		tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
+		a, err := net.ListenTCP("tcp", tcpAddr)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer a.Close()
+		fmt.Println("\n\nserver is listening =>", a.Addr().String())
+		fmt.Println("server is running   =>", os.Getpid())
+		for {
+			c, err := a.AcceptTCP()
+			if err != nil {
+				log.Println(err)
+				_ = c.Close()
+			}
+			go func(c *net.TCPConn) {
+				err = c.SetKeepAlive(true)
+				err = c.SetKeepAlivePeriod(time.Second * 10)
+				if err != nil {
+					log.Println(err)
+					err = c.Close()
+					if err != nil {
+						log.Println(err)
+					}
+				}
+				data := make([]byte, 1024)
+				n, err := c.Read(data)
+				if err != nil {
+					log.Println(err)
+				} else {
+					err = c.CloseRead()
+				}
+				//fmt.Println(string(data))
+				str := SplitString(data[:n], []byte("*$"))
+				msg := ""
+				switch string(str[0]) {
+				case "get":
+					msg = slot.Get(string(str[1]))
+				case "set":
+					if len(str) == 3 {
+						slot.Set(string(str[1]), string(str[2]), 0)
+						msg = "1"
+					} else if len(str) == 4 {
+						ns, err := strconv.Atoi(string(str[3]))
+						if err == nil {
+							slot.Set(string(str[1]), string(str[2]), ns)
+							msg = "1"
+						} else {
+							msg = ""
+						}
+					}
+				default:
+					msg = ""
+				}
+				_, err = c.Write([]byte(msg))
+				if err != nil {
+					log.Println(err)
+				} else {
+					err = c.CloseWrite()
+				}
+				//err = c.Close()
+				//if err != nil {
+				//	log.Println(err)
+				//}
+			}(c)
+		}
+	}
+	fmt.Println("123")
 	//tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	slot.Face.IP = config.Addr
+	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
 	fmt.Println("\n\nserver is listening =>", a.Addr().String())
 	fmt.Println("server is running   =>", os.Getpid())
 	go listenAllSlotAction()
@@ -260,6 +263,7 @@ func client(config Config) {
 }
 func (s *Slot) Get(key string) string {
 	n := s.getHashPos([]rune(key))
+	fmt.Println("get value of", n, "slot", key)
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(key)
 	} else {
@@ -267,11 +271,12 @@ func (s *Slot) Get(key string) string {
 	}
 }
 func (s *Slot) Set(n ...interface{}) string {
-
 	key := n[0].(string)
 	value := n[1].(string)
 	ns := s.getHashPos([]rune(key))
+	fmt.Println("set value to", s.Face.IP, "slot", key)
 	if s.All[ns].IP == s.Face.IP {
+		fmt.Println("save")
 		return string(balala.Set(key, value, int64(n[2].(int))))
 	} else {
 		return getRemote([]byte("set*$"+key+"*$"+value+"*$"+strconv.Itoa(n[2].(int))), s.All[ns].IP)
@@ -280,7 +285,7 @@ func (s *Slot) Set(n ...interface{}) string {
 func getRemote(lang []byte, ip string) string {
 	con, err := net.Dial("tcp", ip)
 	if err != nil {
-		log.Println(252, err)
+		log.Println(285, err)
 		return ""
 	}
 	defer con.Close()

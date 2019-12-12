@@ -2,6 +2,8 @@ package test
 
 import (
 	"../../spruce"
+	"fmt"
+	"net/http"
 	"testing"
 )
 
@@ -9,10 +11,22 @@ func TestDIS2(t *testing.T) {
 	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.FILE,
 		DCSConfigFile: "./config.yml",
-		Addr:          ":88",
-		KeepAlive:     false,
+		Addr:          "127.0.0.1:88",
+		KeepAlive:     true,
 		IsBackup:      false,
+		NowIP:         "127.0.0.1:88",
 	})
+}
+func TestBack(t *testing.T) {
+
+	http.HandleFunc("/door", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Println(request.RemoteAddr)
+		writer.Write([]byte(`{"run":"yes","ip":"101.132.172.196","port":"443","continue_time":"5"}`))
+	})
+	http.HandleFunc("/report", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Println(request.URL.RawQuery)
+	})
+	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
 	go spruce.StartSpruceDistributed(spruce.Config{})
