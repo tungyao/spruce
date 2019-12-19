@@ -131,3 +131,14 @@ func FindString(v []byte, p []byte) interface{} {
 	// }
 	// return nil
 }
+func Equal(one []byte, two []byte) bool {
+	if len(one) != len(two) {
+		return false
+	}
+	for k, v := range one {
+		if v != two[k] {
+			return false
+		}
+	}
+	return true
+}

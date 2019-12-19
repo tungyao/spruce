@@ -3,7 +3,6 @@ package spruce
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -124,75 +123,71 @@ func initDNode(p string) *Slot {
 func client(config Config) {
 	slot := initDNode(config.DCSConfigFile)
 	slot.Face.IP = config.NowIP
-	if config.KeepAlive {
-		tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
-		a, err := net.ListenTCP("tcp", tcpAddr)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		defer a.Close()
-		fmt.Println("\n\nserver is listening =>", a.Addr().String())
-		fmt.Println("server is running   =>", os.Getpid())
-		for {
-			c, err := a.AcceptTCP()
-			if err != nil {
-				log.Println(err)
-				_ = c.Close()
-			}
-			go func(c *net.TCPConn) {
-				err = c.SetKeepAlive(true)
-				err = c.SetKeepAlivePeriod(time.Second * 10)
-				if err != nil {
-					log.Println(err)
-					err = c.Close()
-					if err != nil {
-						log.Println(err)
-					}
-				}
-				data := make([]byte, 1024)
-				n, err := c.Read(data)
-				if err != nil {
-					log.Println(err)
-				} else {
-					err = c.CloseRead()
-				}
-				//fmt.Println(string(data))
-				str := SplitString(data[:n], []byte("*$"))
-				msg := ""
-				switch string(str[0]) {
-				case "get":
-					msg = slot.Get(string(str[1]))
-				case "set":
-					if len(str) == 3 {
-						slot.Set(string(str[1]), string(str[2]), 0)
-						msg = "1"
-					} else if len(str) == 4 {
-						ns, err := strconv.Atoi(string(str[3]))
-						if err == nil {
-							slot.Set(string(str[1]), string(str[2]), ns)
-							msg = "1"
-						} else {
-							msg = ""
-						}
-					}
-				default:
-					msg = ""
-				}
-				_, err = c.Write([]byte(msg))
-				if err != nil {
-					log.Println(err)
-				} else {
-					err = c.CloseWrite()
-				}
-				//err = c.Close()
-				//if err != nil {
-				//	log.Println(err)
-				//}
-			}(c)
-		}
-	}
-	fmt.Println("123")
+	//if config.KeepAlive {
+	//	tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
+	//	a, err := net.ListenTCP("tcp", tcpAddr)
+	//	if err != nil {
+	//		log.Println(err)
+	//		return
+	//	}
+	//	defer a.Close()
+	//	fmt.Println("\n\nserver is listening =>", a.Addr().String())
+	//	fmt.Println("server is running   =>", os.Getpid())
+	//	for {
+	//		c, err := a.AcceptTCP()
+	//		if err != nil {
+	//			log.Println(err)
+	//			_ = c.Close()
+	//		}
+	//		go func(c *net.TCPConn) {
+	//			err = c.SetKeepAlive(true)
+	//			err = c.SetKeepAlivePeriod(time.Second * 10)
+	//			if err != nil {
+	//				log.Println(err)
+	//				err = c.Close()
+	//				if err != nil {
+	//					log.Println(err)
+	//				}
+	//			}
+	//			data := make([]byte, 1024)
+	//			n, err := c.Read(data)
+	//			if err != nil {
+	//				log.Println(err)
+	//			} else {
+	//				err = c.CloseRead()
+	//			}
+	//			//fmt.Println(string(data))
+	//			str := SplitString(data[:n], []byte("*$"))
+	//			msg := make([]byte, 0)
+	//			switch string(str[0]) {
+	//			case "get":
+	//				msg = slot.Get(str[1])
+	//			case "set":
+	//				if len(str) == 3 {
+	//					slot.Set(string(str[1]), string(str[2]), 0)
+	//				} else if len(str) == 4 {
+	//					ns, err := strconv.Atoi(string(str[3]))
+	//					if err == nil {
+	//						slot.Set(string(str[1]), string(str[2]), ns)
+	//					} else {
+	//					}
+	//				}
+	//			default:
+	//				msg = []byte{0x65, 0x72, 0x72, 0x6F, 0x72}
+	//			}
+	//			_, err = c.Write([]byte(msg))
+	//			if err != nil {
+	//				log.Println(err)
+	//			} else {
+	//				err = c.CloseWrite()
+	//			}
+	//			//err = c.Close()
+	//			//if err != nil {
+	//			//	log.Println(err)
+	//			//}
+	//		}(c)
+	//	}
+	//}
 	//tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
@@ -205,52 +200,61 @@ func client(config Config) {
 	go listenAllSlotAction()
 	for {
 		c, err := a.Accept()
-
 		if err != nil {
 			log.Println(err)
 		}
 		go func(c net.Conn) {
 			data := make([]byte, 1024)
 			n, err := c.Read(data)
-			str := SplitString(data[:n], []byte("*$"))
-			msg := ""
-			switch string(str[0]) {
-			case "get":
-				msg = slot.Get(string(str[1]))
-			case "set":
-				if len(str) == 3 {
-					slot.Set(string(str[1]), string(str[2]), 0)
-					msg = "1"
-				} else if len(str) == 4 {
-					ns, err := strconv.Atoi(string(str[3]))
-					if err == nil {
-						slot.Set(string(str[1]), string(str[2]), ns)
-						msg = "1"
-					} else {
-						msg = ""
-					}
-				}
-			case "reset":
-				rWeigh, err := strconv.Atoi(string(str[3]))
-				if err != nil {
-					log.Println(err)
-				} else {
-					rName := string(str[1])
-					rIp := string(str[2])
-					rPwd := string(str[4])
-					p := DNode{
-						Name:  rName,
-						IP:    rIp,
-						Weigh: rWeigh,
-						Pwd:   rPwd,
-					}
-					AllSlot = append(AllSlot, p)
-					action <- 1
-				}
-			default:
-				msg = ""
+			//str := SplitString(data[:n], []byte("*$"))
+			msg := make([]byte, 0)
+			switch data[0] {
+			case 0:
+			case 1:
+				// TODO 写到这里来了
+				msg = slot.Set(data[:n])
+				//return SendStatusMessage()
+			case 2:
+				msg = slot.Get(data[11:])
+			case 3:
 			}
-			_, err = c.Write([]byte(msg))
+			//switch string(str[0]) {
+			//case "get":
+			//	msg = slot.Get(str[1])
+			//case "set":
+			//	if len(str) == 3 {
+			//		slot.Set(string(str[1]), string(str[2]), 0)
+			//		//msg = "1"
+			//	} else if len(str) == 4 {
+			//		ns, err := strconv.Atoi(string(str[3]))
+			//		if err == nil {
+			//			slot.Set(string(str[1]), string(str[2]), ns)
+			//			//msg = "1"
+			//		} else {
+			//			//msg = ""
+			//		}
+			//	}
+			//case "reset":
+			//	rWeigh, err := strconv.Atoi(string(str[3]))
+			//	if err != nil {
+			//		log.Println(err)
+			//	} else {
+			//		rName := string(str[1])
+			//		rIp := string(str[2])
+			//		rPwd := string(str[4])
+			//		p := DNode{
+			//			Name:  rName,
+			//			IP:    rIp,
+			//			Weigh: rWeigh,
+			//			Pwd:   rPwd,
+			//		}
+			//		AllSlot = append(AllSlot, p)
+			//		action <- 1
+			//	}
+			//default:
+			//	msg = []byte{0x65, 0x72, 0x72, 0x6F, 0x72}
+			//}
+			_, err = c.Write(msg)
 			if err != nil {
 				log.Println(err)
 			}
@@ -261,36 +265,40 @@ func client(config Config) {
 	//}
 
 }
-func (s *Slot) Get(key string) string {
-	n := s.getHashPos([]rune(key))
+func (s *Slot) Get(key []byte) []byte {
+	n := s.getHashPos(key)
 	fmt.Println("get value of", n, "slot", key)
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(key)
 	} else {
-		return getRemote([]byte("get*$"+key), s.All[n].IP)
+		return getRemote(SendGetMessage(key), s.All[n].IP)
 	}
 }
-func (s *Slot) Set(n ...interface{}) string {
-	key := n[0].(string)
-	value := n[1].(string)
-	ns := s.getHashPos([]rune(key))
+func (s *Slot) Position(key []byte) int {
+	return int(s.getHashPos(key))
+}
+func (s *Slot) Set(lang []byte) []byte {
+	key, value := SplitKeyValue(lang[11:])
+	ns := s.getHashPos(key)
 	fmt.Println("set value to", s.Face.IP, "slot", key)
 	if s.All[ns].IP == s.Face.IP {
 		fmt.Println("save")
-		return string(balala.Set(key, value, int64(n[2].(int))))
+		ti := ParsingExpirationDate(lang[2:3]).(int64)
+		it := balala.Set(key, value, ti)
+		return []byte{uint8(it)}
 	} else {
-		return getRemote([]byte("set*$"+key+"*$"+value+"*$"+strconv.Itoa(n[2].(int))), s.All[ns].IP)
+		return getRemote(lang, s.All[ns].IP)
 	}
 }
-func getRemote(lang []byte, ip string) string {
+func getRemote(lang []byte, ip string) []byte {
 	con, err := net.Dial("tcp", ip)
 	if err != nil {
-		log.Println(285, err)
-		return ""
+		log.Println(295, err)
+		return nil
 	}
 	defer con.Close()
 	con.Write(lang)
-	return string(GetData(con))
+	return GetData(con)
 }
 func GetData(a net.Conn) []byte {
 	out := make([][]byte, 0)
@@ -313,7 +321,7 @@ func GetData(a net.Conn) []byte {
 	}
 	return o
 }
-func (s *Slot) hashString(str []rune, hashcode uint) uint {
+func (s *Slot) hashString(str []byte, hashcode uint) uint {
 	var (
 		key        = str
 		seed1 uint = 0x7FED7FED
@@ -327,7 +335,7 @@ func (s *Slot) hashString(str []rune, hashcode uint) uint {
 	}
 	return seed1
 }
-func (s *Slot) getHashPos(str []rune) uint {
+func (s *Slot) getHashPos(str []byte) uint {
 	var (
 		hOffset  uint = 0
 		hashA    uint = 1
@@ -427,56 +435,10 @@ func ParseConfigFile(path string) []DNode {
 	//}
 	//return dn
 }
-func CreateLocalPWD() []byte {
-	rands := []byte("0123456789abcdefghjiklmnopqrstuvwxyz#$&*_+=")
-	outs := make([]byte, 0)
-	for i := 0; i < 128; i++ {
-		outs = append(outs, rands[getRandomInt(0, len(rands)-1)])
-	}
-	f, err := os.OpenFile("./pass.ewm", os.O_CREATE|os.O_WRONLY, 666)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-	_, err = f.Write(outs)
-	if err != nil {
-		log.Println(err)
-	}
-	return outs
-}
-func Encrypt(string2 []byte) []byte {
-	fs, err := os.OpenFile("./pass.ewm", os.O_RDONLY|os.O_CREATE, 666)
-	if err != nil {
-		log.Panicln(err)
-		os.Exit(0)
-	}
-	defer fs.Close()
-	n1, err := ioutil.ReadAll(fs)
-	if len(n1) == 0 || err != nil {
-		log.Panicln("There is no password in the document", err)
-	}
-
-	for k, v := range string2 {
-		string2[k] = v + n1[len(n1)-1%int(v)]
-	}
-	return string2
-}
-func Decrypt(s []byte) []byte {
-	fs, err := os.OpenFile("./pass.ewm", os.O_RDONLY|os.O_CREATE, 666)
-	if err != nil {
-		log.Println(err)
-	}
-	defer fs.Close()
-	n1, err := ioutil.ReadAll(fs)
-	for k, v := range s {
-		s[k] = v - n1[len(n1)-1%int(v)]
-	}
-	return s
-}
 
 // save memory data to local , default 60s run one ,but you can advance or delay
 func localStorageFile() {
-	allkey := balala.Get("*")
+	allkey := balala.Get([]byte("*"))
 	fmt.Println(allkey)
 	fs, err := os.OpenFile("./spruce.db", os.O_CREATE|os.O_WRONLY, 666)
 	if err != nil {

@@ -5,8 +5,8 @@ import (
 )
 
 type node struct {
-	key   string
-	value string
+	key   []byte
+	value []byte
 	at    int64 `insertion time -> unix time -> second`
 	et    int64 `Expiration time -> second`
 	next  *node
@@ -45,24 +45,24 @@ func CreateHash(n int) *hash {
 	}
 
 }
-func find(key string, node *node) string {
+func find(key []byte, node *node) []byte {
 	tmp := node
 	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
-		return ""
+		return nil
 	}
 	for tmp != nil {
-		if tmp.key != key {
+		if Equal(tmp.key, key) {
 			tmp = tmp.next
 			continue
 		}
 		break
 	}
 	if time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
-		return ""
+		return nil
 	}
 	return tmp.value
 }
-func newNode(k, v string, deep int, exptime int64) *node {
+func newNode(k, v []byte, deep int, exptime int64) *node {
 	return &node{
 		key:   k,
 		value: v,
@@ -71,14 +71,14 @@ func newNode(k, v string, deep int, exptime int64) *node {
 		deep:  deep,
 	}
 }
-func (h *hash) Set(key string, value string, expTime int64) int {
-	pos := h.GetHashPos([]rune(key))
+func (h *hash) Set(key []byte, value []byte, expTime int64) int {
+	pos := h.GetHashPos(key)
 	d := h.ver[pos]
 	if d == nil {
 		h.ver[pos] = newNode(key, value, 0, expTime)
 		return int(pos)
 	}
-	if d.key == key {
+	if Equal(d.key, key) {
 		h.ver[pos].value = value
 		return int(pos)
 	}
@@ -89,27 +89,27 @@ func (h *hash) Set(key string, value string, expTime int64) int {
 	d.next = newNode(key, value, d.deep+1, expTime)
 	return int(pos)
 }
-func (h *hash) Get(key string) string {
-	if key == "*" {
+func (h *hash) Get(key []byte) []byte {
+	if Equal(key, []byte("*")) {
 		return findAll(h.ver, 1)
 	}
-	pos := h.GetHashPos([]rune(key))
+	pos := h.GetHashPos(key)
 	return find(key, h.ver[pos])
 }
-func findAll(n []*node, tp int) string {
+func findAll(n []*node, tp int) []byte {
 	tmp := n
-	s := ""
+	//s := ""
 	for _, v := range tmp {
 		t := v
 		for t != nil {
-			s += t.key + "****" + t.value + "\n"
+			//s += t.key + "****" + t.value + "\n"
 			//s += t.key + "\t" + t.value + "\n"
 			t = v.next
 		}
 	}
-	return ""
+	return nil
 }
-func (h *hash) hashString(str []rune, hashcode uint) uint {
+func (h *hash) hashString(str []byte, hashcode uint) uint {
 	var (
 		key        = str
 		seed1 uint = 0x7FED7FED
@@ -123,7 +123,7 @@ func (h *hash) hashString(str []rune, hashcode uint) uint {
 	}
 	return seed1
 }
-func (h *hash) GetHashPos(str []rune) uint {
+func (h *hash) GetHashPos(str []byte) uint {
 	var (
 		hOffset  uint = 0
 		hashA    uint = 1
