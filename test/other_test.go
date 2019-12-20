@@ -1,18 +1,23 @@
 package test
 
 import (
+	"../../spruce"
 	"testing"
 )
-import "../../spruce"
 
 func TestOther(t *testing.T) {
-	//s := spruce.Encrypt([]byte("hello wolrd"))
-	//t.Log(string(spruce.Decrypt(s)))
-	t.Log(string(spruce.CreateLocalPWD()))
+	s := spruce.Encrypt([]byte("hello wolrd"))
+	t.Log(string(spruce.Decrypt(s)))
+	//t.Log(string(spruce.CreateLocalPWD()))
 }
 func TestStringToInt(t *testing.T) {
-	a := "12"
-	t.Log(StringToInt(a))
+	//a := "12"
+	//t.Log(StringToInt(a))
+	//spruce.SendSetMessage([]byte("hello"),"")
+}
+func TestByte(t *testing.T) {
+	t.Log(spruce.ParsingExpirationDate([]byte{28,32}))
+	t.Log(spruce.ParsingExpirationDate(7200))
 }
 func StringToInt(a string) int {
 	var intSize int

@@ -12,7 +12,7 @@ func TestDIS2(t *testing.T) {
 		ConfigType:    spruce.FILE,
 		DCSConfigFile: "./config.yml",
 		Addr:          "127.0.0.1:88",
-		KeepAlive:     true,
+		KeepAlive:     false,
 		IsBackup:      false,
 		NowIP:         "127.0.0.1:88",
 	})
@@ -29,6 +29,8 @@ func TestBack(t *testing.T) {
 	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
+	var edges = make([][]int,0)
+	edges = append(edges,[]int{1,2})
 	go spruce.StartSpruceDistributed(spruce.Config{})
 	//a, err := net.Listen("tcp", ":79")
 	//if err != nil {
