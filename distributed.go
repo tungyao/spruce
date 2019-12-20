@@ -215,7 +215,7 @@ func client(config Config) {
 				msg = slot.Set(data[:n])
 				//return SendStatusMessage()
 			case 2:
-				msg = slot.Get(data[11:])
+				msg = slot.Get(data[11:n])
 			case 3:
 			}
 			//switch string(str[0]) {
@@ -267,7 +267,7 @@ func client(config Config) {
 }
 func (s *Slot) Get(key []byte) []byte {
 	n := s.getHashPos(key)
-	fmt.Println("get value of", n, "slot", key)
+	fmt.Println("get value of", n, "slot", string(key))
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(key)
 	} else {
@@ -280,10 +280,10 @@ func (s *Slot) Position(key []byte) int {
 func (s *Slot) Set(lang []byte) []byte {
 	key, value := SplitKeyValue(lang[11:])
 	ns := s.getHashPos(key)
-	fmt.Println("set value to", s.Face.IP, "slot", key)
+	fmt.Println("set value to", s.Face.IP, "slot", string(key))
 	if s.All[ns].IP == s.Face.IP {
 		fmt.Println("save")
-		ti := ParsingExpirationDate(lang[2:3]).(int64)
+		ti := ParsingExpirationDate(lang[2:4]).(int64)
 		it := balala.Set(key, value, ti)
 		return []byte{uint8(it)}
 	} else {

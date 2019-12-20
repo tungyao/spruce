@@ -25,7 +25,6 @@ func SplitKeyValue(b []byte) ([]byte, []byte) {
 	return nil, nil
 }
 func ParsingExpirationDate(tm interface{}) interface{} {
-	fmt.Println(tm)
 	switch tm.(type) {
 	case []byte:
 		if len(tm.([]byte)) > 2 {

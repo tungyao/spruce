@@ -51,13 +51,13 @@ func find(key []byte, node *node) []byte {
 		return nil
 	}
 	for tmp != nil {
-		if Equal(tmp.key, key) {
+		if !Equal(tmp.key, key) {
 			tmp = tmp.next
 			continue
 		}
 		break
 	}
-	if time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
+	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
 		return nil
 	}
 	return tmp.value
