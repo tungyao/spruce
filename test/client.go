@@ -1,4 +1,4 @@
-package main
+package test
 
 import (
 	"flag"
@@ -26,14 +26,14 @@ func main() {
 	//	log.Println(err,2)
 	//	return
 	//}
-	for{
+	for {
 
 		var operation string
 		var key string
 		var value string
 		fmt.Print(addr + ">> ")
-		c,err:=net.Dial("tcp",addr)
-		if err!=nil{
+		c, err := net.Dial("tcp", addr)
+		if err != nil {
 			log.Println(err)
 		}
 		_, _ = fmt.Scanln(&operation, &key, &value)
@@ -48,28 +48,28 @@ func main() {
 		_ = c.Close()
 	}
 	//for {
-		//listen, err := a.AcceptTCP()
-		//listen, err := a.A()
-		//if err != nil {
-		//	log.Println(err,3)
-		//	return
-		//}
-		//go func(c *net.TCPConn) {
-		//	var operation string
-		//	var key string
-		//	var value string
-		//	fmt.Print(addr + ">> ")
-		//	_, _ = fmt.Scanln(&operation, &key, &value)
-		//	if value != "" {
-		//		_, _ = c.Write(EntrySet(key, value, 0))
-		//	} else {
-		//		_, _ = c.Write(EntryGet(key))
-		//	}
-		//	data := make([]byte, 1024)
-		//	n, _ := c.Read(data)
-		//	fmt.Println(string(data[:n]))
-		//	_ = c.Close()
-		//}(listen)
+	//listen, err := a.AcceptTCP()
+	//listen, err := a.A()
+	//if err != nil {
+	//	log.Println(err,3)
+	//	return
+	//}
+	//go func(c *net.TCPConn) {
+	//	var operation string
+	//	var key string
+	//	var value string
+	//	fmt.Print(addr + ">> ")
+	//	_, _ = fmt.Scanln(&operation, &key, &value)
+	//	if value != "" {
+	//		_, _ = c.Write(EntrySet(key, value, 0))
+	//	} else {
+	//		_, _ = c.Write(EntryGet(key))
+	//	}
+	//	data := make([]byte, 1024)
+	//	n, _ := c.Read(data)
+	//	fmt.Println(string(data[:n]))
+	//	_ = c.Close()
+	//}(listen)
 
 	//}
 

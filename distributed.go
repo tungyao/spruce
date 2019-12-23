@@ -93,7 +93,7 @@ func StartSpruceDistributed(config Config) {
 		DCSConfigFile: "./spruce.yml",
 		Addr:          ":9102",
 	})
-	//fmt.Println(config)
+	// region print logo
 	fmt.Print(`
   ___ _ __  _ __ _   _  ___ ___ 
  / __| '_ \| '__| | | |/ __/ _ \
@@ -107,6 +107,7 @@ Spruce is distributed key-value data based on go.
 Of course, we built it in an embedded way 
 at the beginning of the design. You can also 
 use ordinary map functions as easily `)
+	// endregion
 	client(config)
 }
 func initDNode(p string) *Slot {
@@ -198,6 +199,7 @@ func client(config Config) {
 	fmt.Println("\n\nserver is listening =>", a.Addr().String())
 	fmt.Println("server is running   =>", os.Getpid())
 	go listenAllSlotAction()
+	// 应该写嵌入式了
 	for {
 		c, err := a.Accept()
 		if err != nil {
@@ -210,8 +212,8 @@ func client(config Config) {
 			msg := make([]byte, 0)
 			switch data[0] {
 			case 0:
+				msg = slot.Delete(data[:n])
 			case 1:
-				// TODO 写到这里来了
 				msg = slot.Set(data[:n])
 				//return SendStatusMessage()
 			case 2:
@@ -286,6 +288,19 @@ func (s *Slot) Set(lang []byte) []byte {
 		ti := ParsingExpirationDate(lang[2:4]).(int64)
 		it := balala.Set(key, value, ti)
 		return []byte{uint8(it)}
+	} else {
+		return getRemote(lang, s.All[ns].IP)
+	}
+}
+func (s *Slot) Delete(lang []byte) []byte {
+	key := lang[11:]
+	if len(key) < 1 {
+		return nil
+	}
+	ns := s.getHashPos(key)
+	fmt.Println("delete value of", s.Face.IP, "slot", string(key))
+	if s.All[ns].IP == s.Face.IP {
+		return balala.Delete(key)
 	} else {
 		return getRemote(lang, s.All[ns].IP)
 	}

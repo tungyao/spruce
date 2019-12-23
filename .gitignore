@@ -12,3 +12,7 @@
 *.out
 /.idea/
 
+test/1/spruce.yml
+test/2/spruce.yml
+test/config.yml
+test/pass.ewm

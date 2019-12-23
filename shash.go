@@ -11,6 +11,7 @@ type node struct {
 	et    int64 `Expiration time -> second`
 	next  *node
 	deep  int
+	dl    int8
 }
 type hash struct {
 	ver   []*node
@@ -69,6 +70,7 @@ func newNode(k, v []byte, deep int, exptime int64) *node {
 		at:    time.Now().Unix(),
 		et:    exptime,
 		deep:  deep,
+		dl:    0,
 	}
 }
 func (h *hash) Set(key []byte, value []byte, expTime int64) int {
@@ -95,6 +97,31 @@ func (h *hash) Get(key []byte) []byte {
 	}
 	pos := h.GetHashPos(key)
 	return find(key, h.ver[pos])
+}
+
+func (h *hash) Delete(key []byte) []byte {
+	pos := h.GetHashPos(key)
+	n, v := delete(key, h.ver[pos])
+	h.ver[pos] = n
+	return v
+}
+func delete(key []byte, nod *node) (*node, []byte) {
+	if nod == nil {
+		return nod, nil
+	}
+	p1 := nod
+	p2 := nod.next
+	for p2 != nil {
+		if Equal(p2.key, key) {
+			p1.next = p2.next
+			p2 = &node{}
+			//return p1, v
+		} else {
+			p1 = p2
+		}
+		p2 = p1.next
+	}
+	return p1, v
 }
 func findAll(n []*node, tp int) []byte {
 	tmp := n
