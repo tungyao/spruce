@@ -15,16 +15,23 @@ import (
 
 const (
 	FILE = iota
-	COMMAND
+	MEMORY
 )
 
 type Config struct {
-	ConfigType    int    `配置方式`
-	DCSConfigFile string `分布式的配置文件路径`
-	Addr          string `跑在哪个端口上`
-	NowIP         string `当前服务器运行的IP地址 暂时必须`
+	ConfigType    int         `配置方式`
+	DCSConfigFile string      `分布式的配置文件路径`
+	DCSConfigs    []DCSConfig `采用内存的方式部署`
+	Addr          string      `跑在哪个端口上`
+	NowIP         string      `当前服务器运行的IP地址 暂时必须`
 	KeepAlive     bool
 	IsBackup      bool
+}
+type DCSConfig struct {
+	Name     string
+	Ip       string
+	Weigh    int
+	Password string
 }
 type DNode struct {
 	Name  string
@@ -87,7 +94,7 @@ func New(config Config) *Slot {
 }
 
 // TODO Start
-func StartSpruceDistributed(config Config) {
+func StartSpruceDistributed(config Config) *Slot {
 	CheckConfig(&config, Config{
 		ConfigType:    FILE,
 		DCSConfigFile: "./spruce.yml",
@@ -108,7 +115,13 @@ Of course, we built it in an embedded way
 at the beginning of the design. You can also 
 use ordinary map functions as easily `)
 	// endregion
-	client(config)
+	switch config.ConfigType {
+	case FILE:
+		client(config)
+	case MEMORY:
+		return createMemory(config)
+	}
+	return nil
 }
 func initDNode(p string) *Slot {
 	d := ParseConfigFile(p)
@@ -217,7 +230,7 @@ func client(config Config) {
 				msg = slot.Set(data[:n])
 				//return SendStatusMessage()
 			case 2:
-				msg = slot.Get(data[11:n])
+				msg = slot.Get(data[:n])
 			case 3:
 			}
 			//switch string(str[0]) {
@@ -267,13 +280,13 @@ func client(config Config) {
 	//}
 
 }
-func (s *Slot) Get(key []byte) []byte {
-	n := s.getHashPos(key)
-	fmt.Println("get value of", n, "slot", string(key))
+func (s *Slot) Get(lang []byte) []byte {
+	n := s.getHashPos(lang[11:])
+	fmt.Println("get value of", n, "slot", string(lang[11:]))
 	if s.All[n].IP == s.Face.IP {
-		return balala.Get(key)
+		return balala.Get(lang[11:])
 	} else {
-		return getRemote(SendGetMessage(key), s.All[n].IP)
+		return getRemote(SendGetMessage(lang[11:]), s.All[n].IP)
 	}
 }
 func (s *Slot) Position(key []byte) int {
@@ -617,4 +630,114 @@ func hashString(str []rune) int {
 		seed2 = ch + seed1 + seed2 + (seed2 << 5) + 3
 	}
 	return int(seed1)
+}
+
+// memory control
+func createMemory(config Config) *Slot {
+	d := make([]DNode, len(config.DCSConfigs))
+	fmt.Print("\n\nrunning server\n")
+	fmt.Print("id", "\t", "name", "\t", "ip", "\t", "weigh", "\n")
+	for k, v := range config.DCSConfigs {
+		d[k] = DNode{
+			Name:  v.Name,
+			IP:    v.Ip,
+			Weigh: v.Weigh,
+			Pwd:   v.Password,
+		}
+		fmt.Print(k, "\t", v.Name, "\t", v.Ip, "\t", v.Weigh, "\n")
+	}
+	slot := setAllDNode(d)
+	slot.Face.IP = config.NowIP
+	go createMemoryServe(config, slot)
+	return slot
+}
+func createMemoryServe(config Config, s *Slot) {
+	if config.KeepAlive {
+		tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
+		a, err := net.ListenTCP("tcp", tcpAddr)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		defer a.Close()
+		fmt.Println("\n\nserver is listening =>", a.Addr().String())
+		fmt.Println("server is running   =>", os.Getpid())
+		for {
+			c, err := a.AcceptTCP()
+			fmt.Println(123)
+			if err != nil {
+				log.Println(err)
+			}
+			go memoryServeHandle(c, s)
+		}
+	}
+	a, err := net.Listen("tcp", config.Addr)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
+	fmt.Println("\n\nserver is listening =>", a.Addr().String())
+	fmt.Println("server is running   =>", os.Getpid())
+	go listenAllSlotAction()
+	// 应该写嵌入式了
+	for {
+		c, err := a.Accept()
+		if err != nil {
+			log.Println(err)
+		}
+		go memoryServeHandleConn(c, s)
+	}
+}
+func memoryServeHandleConn(c net.Conn, slot *Slot) {
+	data := make([]byte, 1024)
+	n, err := c.Read(data)
+	log.Println("get bytes", data[:n], n)
+	if err != nil {
+		log.Println(err)
+	} else {
+		err = c.Close()
+	}
+	msg := make([]byte, 0)
+	switch data[0] {
+	case 0:
+		msg = slot.Delete(data[:n])
+	case 1:
+		msg = slot.Set(data[:n])
+		//return SendStatusMessage()
+	case 2:
+		msg = slot.Get(data[:n])
+	case 3:
+	}
+	_, err = c.Write(msg)
+	if err != nil {
+		log.Println(err)
+	}
+	err = c.Close()
+}
+func memoryServeHandle(c *net.TCPConn, slot *Slot) {
+	data := make([]byte, 1024)
+	n, err := c.Read(data)
+	log.Println("get bytes", data[:n], n)
+	if err != nil {
+		log.Println(err)
+	} else {
+		err = c.CloseRead()
+	}
+	msg := make([]byte, 0)
+	switch data[0] {
+	case 0:
+		msg = slot.Delete(data[:n])
+	case 1:
+		msg = slot.Set(data[:n])
+		//return SendStatusMessage()
+	case 2:
+		msg = slot.Get(data[:n])
+	case 3:
+	}
+	_, err = c.Write(msg)
+	if err != nil {
+		log.Println(err)
+	}
+	err = c.Close()
 }

@@ -121,7 +121,7 @@ func delete(key []byte, nod *node) (*node, []byte) {
 		}
 		p2 = p1.next
 	}
-	return p1, v
+	return p1, nil
 }
 func findAll(n []*node, tp int) []byte {
 	tmp := n
