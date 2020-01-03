@@ -1,6 +1,7 @@
 package spruce
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -126,12 +127,10 @@ func delete(key []byte, nod *node) (*node, []byte) {
 }
 func findAll(n []*node, tp int) []byte {
 	tmp := n
-	//s := ""
 	for _, v := range tmp {
 		t := v
 		for t != nil {
-			//s += t.key + "****" + t.value + "\n"
-			//s += t.key + "\t" + t.value + "\n"
+			fmt.Println(string(t.key))
 			t = v.next
 		}
 	}
