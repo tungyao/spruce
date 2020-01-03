@@ -59,6 +59,7 @@ func find(key []byte, node *node) []byte {
 		break
 	}
 	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
+		tmp = tmp.next
 		return nil
 	}
 	return tmp.value
