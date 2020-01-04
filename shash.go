@@ -14,14 +14,14 @@ type node struct {
 	deep  int
 	dl    int8
 }
-type hash struct {
+type Hash struct {
 	ver   []*node
 	clone int
 }
 
 var CRY []uint
 
-func CreateHash(n int) *hash {
+func CreateHash(n int) *Hash {
 	cryptTable := make([]uint, n)
 	verticalTable := make([]*node, n)
 	var (
@@ -42,7 +42,7 @@ func CreateHash(n int) *hash {
 		i += 1
 	}
 	CRY = cryptTable
-	return &hash{
+	return &Hash{
 		ver: verticalTable,
 	}
 
@@ -75,7 +75,7 @@ func newNode(k, v []byte, deep int, exptime int64) *node {
 		dl:    0,
 	}
 }
-func (h *hash) Set(key []byte, value []byte, expTime int64) int {
+func (h *Hash) Set(key []byte, value []byte, expTime int64) int {
 	pos := h.GetHashPos(key)
 	d := h.ver[pos]
 	if d == nil {
@@ -93,7 +93,7 @@ func (h *hash) Set(key []byte, value []byte, expTime int64) int {
 	d.next = newNode(key, value, d.deep+1, expTime)
 	return int(pos)
 }
-func (h *hash) Get(key []byte) []byte {
+func (h *Hash) Get(key []byte) []byte {
 	if Equal(key, []byte("*")) {
 		return findAll(h.ver, 1)
 	}
@@ -101,7 +101,7 @@ func (h *hash) Get(key []byte) []byte {
 	return find(key, h.ver[pos])
 }
 
-func (h *hash) Delete(key []byte) []byte {
+func (h *Hash) Delete(key []byte) []byte {
 	pos := h.GetHashPos(key)
 	n, v := delete(key, h.ver[pos])
 	h.ver[pos] = n
@@ -136,7 +136,7 @@ func findAll(n []*node, tp int) []byte {
 	}
 	return nil
 }
-func (h *hash) hashString(str []byte, hashcode uint) uint {
+func (h *Hash) hashString(str []byte, hashcode uint) uint {
 	var (
 		key        = str
 		seed1 uint = 0x7FED7FED
@@ -150,7 +150,7 @@ func (h *hash) hashString(str []byte, hashcode uint) uint {
 	}
 	return seed1
 }
-func (h *hash) GetHashPos(str []byte) uint {
+func (h *Hash) GetHashPos(str []byte) uint {
 	var (
 		hOffset  uint = 0
 		hashA    uint = 1
@@ -162,6 +162,6 @@ func (h *hash) GetHashPos(str []byte) uint {
 	)
 	return nHashPos
 }
-func (h *hash) Clone() int {
+func (h *Hash) Clone() int {
 	return h.clone
 }
