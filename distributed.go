@@ -614,13 +614,16 @@ func memoryServeHandleConn(c net.Conn, slot *Slot) {
 func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 	data := make([]byte, 1024)
 	n, err := c.Read(data)
-	log.Println("get bytes", data[:n], n)
+	log.Println("get bytes", string(data[:n]), n)
 	if err != nil {
 		log.Println(err)
 	} else {
 		err = c.CloseRead()
 	}
 	msg := make([]byte, 0)
+	if n <= 11 {
+		goto end
+	}
 	switch data[0] {
 	case 0:
 		msg = slot.Delete(data[:n])
@@ -631,6 +634,7 @@ func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 		msg = slot.Get(data[:n])
 	case 3:
 	}
+end:
 	_, err = c.Write(msg)
 	if err != nil {
 		log.Println(err)
