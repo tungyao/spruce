@@ -2,12 +2,12 @@ package spruce
 
 import (
 	"fmt"
+	"github.com/tungyao/ymload"
 	"io"
 	"log"
 	"math/rand"
 	"net"
 	"os"
-	"src/github.com/tungyao/ymload"
 	"strconv"
 	"sync"
 	"time"
