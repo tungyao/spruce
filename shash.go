@@ -51,7 +51,7 @@ func CreateHash(n int) *Hash {
 func find(key []byte, node *node) []byte {
 	tmp := node
 	if tmp == nil || (time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0) {
-		tmp.check = false
+		//tmp.check = false
 		return nil
 	}
 	for tmp != nil {
