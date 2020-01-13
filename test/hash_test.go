@@ -2,23 +2,22 @@ package test
 
 import (
 	"../../spruce"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestHash(t *testing.T) {
 	h := spruce.CreateHash(512)
-	for i := 0; i < 100; i++ {
-		h.Set([]byte(strconv.Itoa(i)), []byte(strconv.Itoa(i)), 0)
-	}
-	t.Log(string(h.Delete([]byte("9"))))
-	//t.Log(string(h.Get([]byte("9"))))
-	//h.Set([]byte(strconv.Itoa(9)), []byte(strconv.Itoa(9)),0)
-	for i := 0; i < 100; i++ {
-		t.Log(string(h.Get([]byte(strconv.Itoa(i)))))
-	}
-	t.Log(string(h.Get([]byte(strconv.Itoa(88)))))
+	h.Set([]byte("abcd"), []byte("efgh"), 2)
+	fmt.Println(h.Get([]byte("abcd")))
+	time.Sleep(time.Second * 3)
+	fmt.Println(h.Get([]byte("abcd")))
+	h.Set([]byte("abcd"), []byte("efgh"), 2)
+	fmt.Println(h.Get([]byte("abcd")))
+
 }
 func TestGHash(t *testing.T) {
 	hash := make(map[string]string, 10240)

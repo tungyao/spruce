@@ -12,6 +12,7 @@ type node struct {
 	et    int64 `Expiration time -> second`
 	next  *node
 	deep  int
+	check bool // 用来检测当前插槽是不是有值存在
 	dl    int8
 }
 type Hash struct {
@@ -49,7 +50,8 @@ func CreateHash(n int) *Hash {
 }
 func find(key []byte, node *node) []byte {
 	tmp := node
-	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
+	if tmp == nil || (time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0) {
+		tmp.check = false
 		return nil
 	}
 	for tmp != nil {
@@ -59,8 +61,10 @@ func find(key []byte, node *node) []byte {
 		}
 		break
 	}
+	fmt.Println(&tmp)
 	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
-		tmp = tmp.next
+		//tmp = tmp.next
+		tmp.check = false
 		return nil
 	}
 	return tmp.value
@@ -72,6 +76,7 @@ func newNode(k, v []byte, deep int, exptime int64) *node {
 		at:    time.Now().Unix(),
 		et:    exptime,
 		deep:  deep,
+		check: true,
 		dl:    0,
 	}
 }
@@ -79,18 +84,45 @@ func (h *Hash) Set(key []byte, value []byte, expTime int64) int {
 	pos := h.GetHashPos(key)
 	d := h.ver[pos]
 	if d == nil {
-		h.ver[pos] = newNode(key, value, 0, expTime)
+		h.ver[pos] = &node{
+			key:   key,
+			value: value,
+			at:    time.Now().Unix(),
+			et:    expTime,
+			next:  nil,
+			deep:  0,
+			check: true,
+			dl:    0,
+		}
 		return int(pos)
 	}
 	if Equal(d.key, key) {
-		h.ver[pos].value = value
+		h.ver[pos] = &node{
+			key:   key,
+			value: value,
+			at:    time.Now().Unix(),
+			et:    expTime,
+			next:  d.next,
+			deep:  0,
+			check: true,
+			dl:    0,
+		}
 		return int(pos)
 	}
-	for d.next != nil {
+	for d.next.check == true {
 		d = d.next
 	}
 	h.clone += 1
-	d.next = newNode(key, value, d.deep+1, expTime)
+	d = &node{
+		key:   key,
+		value: value,
+		at:    time.Now().Unix(),
+		et:    expTime,
+		next:  d.next,
+		deep:  0,
+		check: true,
+		dl:    0,
+	}
 	return int(pos)
 }
 func (h *Hash) Get(key []byte) []byte {

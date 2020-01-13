@@ -29,8 +29,8 @@ func TestBack(t *testing.T) {
 	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
-	var edges = make([][]int,0)
-	edges = append(edges,[]int{1,2})
+	var edges = make([][]int, 0)
+	edges = append(edges, []int{1, 2})
 	go spruce.StartSpruceDistributed(spruce.Config{})
 	//a, err := net.Listen("tcp", ":79")
 	//if err != nil {
@@ -46,4 +46,7 @@ func TestDIS3(t *testing.T) {
 }
 func TestSplit(t *testing.T) {
 	t.Log(spruce.SplitString([]byte("set**hello**word"), []byte("**")))
+}
+func TestMd5(t *testing.T) {
+	t.Log(string(spruce.MD5([]byte("123"))))
 }
