@@ -157,16 +157,23 @@ func delete(key []byte, nod *node) (*node, []byte) {
 	}
 	return p1, nil
 }
-func findAll(n []*node, tp int) []byte {
+func findAll(n []*node, tp int) []byte { // 需要将所有数据按一定规则存放
 	tmp := n
+	data := make([]byte, 0)
 	for _, v := range tmp {
 		t := v
 		for t != nil {
-			fmt.Println(string(t.key))
-			t = v.next
+			for _, v := range t.key {
+				data = append(data, v)
+			}
+			data = append(data, 0xFE)
+			for _, v := range t.value {
+				data = append(data, v)
+			}
+			data = append(data, 0xFF)
 		}
 	}
-	return nil
+	return data
 }
 func (h *Hash) hashString(str []byte, hashcode uint) uint {
 	var (
