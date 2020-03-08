@@ -29,9 +29,17 @@ func TestBack(t *testing.T) {
 	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
-	var edges = make([][]int,0)
-	edges = append(edges,[]int{1,2})
-	go spruce.StartSpruceDistributed(spruce.Config{})
+	var edges = make([][]int, 0)
+	edges = append(edges, []int{1, 2})
+	go spruce.StartSpruceDistributed(spruce.Config{
+		ConfigType:    spruce.MEMORY,
+		DCSConfigFile: "",
+		DCSConfigs:    nil,
+		Addr:          "",
+		NowIP:         "",
+		KeepAlive:     false,
+		IsBackup:      false,
+	})
 	//a, err := net.Listen("tcp", ":79")
 	//if err != nil {
 	//	log.Println(err)

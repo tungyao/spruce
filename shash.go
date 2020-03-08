@@ -2,6 +2,7 @@ package spruce
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -17,6 +18,7 @@ type node struct {
 type Hash struct {
 	ver   []*node
 	clone int
+	rw    sync.RWMutex
 }
 
 var CRY []uint
@@ -94,47 +96,31 @@ func (h *Hash) Set(key []byte, value []byte, expTime int64) int {
 	return int(pos)
 }
 func (h *Hash) Get(key []byte) []byte {
-	if Equal(key, []byte("*")) {
-		return findAll(h.ver, 1)
-	}
 	pos := h.GetHashPos(key)
 	return find(key, h.ver[pos])
 }
+func (h *Hash) Storage() {
+	h.rw.RLock()
+	defer h.rw.RUnlock()
+	FindAll(h.ver)
+}
 
+// 重新从文件中读取到内存中来
+func (h *Hash) Reload() {
+	h.rw.RLock()
+	defer h.rw.RUnlock()
+}
+
+// 这个直接读取是程序启动时会默认执行的
+func (h *Hash) Load() {
+	h.rw.RLock()
+	defer h.rw.RUnlock()
+}
 func (h *Hash) Delete(key []byte) []byte {
 	pos := h.GetHashPos(key)
 	n, v := delete(key, h.ver[pos])
 	h.ver[pos] = n
 	return v
-}
-func delete(key []byte, nod *node) (*node, []byte) {
-	if nod == nil {
-		return nod, nil
-	}
-	p1 := nod
-	p2 := nod.next
-	for p2 != nil {
-		if Equal(p2.key, key) {
-			p1.next = p2.next
-			p2 = &node{}
-			//return p1, v
-		} else {
-			p1 = p2
-		}
-		p2 = p1.next
-	}
-	return p1, nil
-}
-func findAll(n []*node, tp int) []byte {
-	tmp := n
-	for _, v := range tmp {
-		t := v
-		for t != nil {
-			fmt.Println(string(t.key))
-			t = v.next
-		}
-	}
-	return nil
 }
 func (h *Hash) hashString(str []byte, hashcode uint) uint {
 	var (
@@ -164,4 +150,69 @@ func (h *Hash) GetHashPos(str []byte) uint {
 }
 func (h *Hash) Clone() int {
 	return h.clone
+}
+
+func delete(key []byte, nod *node) (*node, []byte) {
+	if nod == nil {
+		return nod, nil
+	}
+	p1 := nod
+	p2 := nod.next
+	for p2 != nil {
+		if Equal(p2.key, key) {
+			p1.next = p2.next
+			p2 = &node{}
+			//return p1, v
+		} else {
+			p1 = p2
+		}
+		p2 = p1.next
+	}
+	return p1, nil
+}
+func FindAll(n []*node) []byte {
+	tmp := n
+	data := make([]byte, 0)
+	for _, v := range tmp {
+		t := v
+		for t != nil {
+			if len(t.key) != 0 {
+				data = append(data)
+				fmt.Println(string(t.key), string(t.value))
+			}
+			t = t.next
+		}
+	}
+	return nil
+}
+
+// replace tab character function
+// \n -> 0
+// \r -> 1
+// \t -> 2
+func ReplaceTabCharacter(in []byte) []byte {
+	for k, v := range in {
+		switch v {
+		case '\n':
+			in[k] = 0x0
+		case '\r':
+			in[k] = 0x1
+		case '\t':
+			in[k] = 0x2
+		}
+	}
+	return in
+}
+func ReplaceTabCharacterToNormal(in []byte) []byte {
+	for k, v := range in {
+		switch v {
+		case 0x0:
+			in[k] = '\n'
+		case 0x1:
+			in[k] = '\r'
+		case 0x2:
+			in[k] = '\t'
+		}
+	}
+	return in
 }

@@ -19,6 +19,14 @@ func TestDIS2(t *testing.T) {
      IsBackup:      false,
      NowIP:         "127.0.0.1:88",
   })
+    // OR
+    spruce.StartSpruceDistributed(spruce.Config{
+         ConfigType: spruce.MEMORY,
+         Addr:          "127.0.0.1:88",
+         KeepAlive:     false,
+         IsBackup:      false,
+         NowIP:         "127.0.0.1:88",
+    })
 }
 ```
 ```yml
