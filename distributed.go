@@ -2,11 +2,11 @@ package spruce
 
 import (
 	"fmt"
+	"github.com/tungyao/ymload"
 	"io"
 	"log"
 	"net"
 	"os"
-	"src/github.com/tungyao/ymload"
 	"strconv"
 	"sync"
 )
@@ -135,72 +135,7 @@ func initDNode(p string) *Slot {
 func client(config Config) {
 	slot := initDNode(config.DCSConfigFile)
 	slot.Face.IP = config.NowIP
-	//if config.KeepAlive {
-	//	tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
-	//	a, err := net.ListenTCP("tcp", tcpAddr)
-	//	if err != nil {
-	//		log.Println(err)
-	//		return
-	//	}
-	//	defer a.Close()
-	//	fmt.Println("\n\nserver is listening =>", a.Addr().String())
-	//	fmt.Println("server is running   =>", os.Getpid())
-	//	for {
-	//		c, err := a.AcceptTCP()
-	//		if err != nil {
-	//			log.Println(err)
-	//			_ = c.Close()
-	//		}
-	//		go func(c *net.TCPConn) {
-	//			err = c.SetKeepAlive(true)
-	//			err = c.SetKeepAlivePeriod(time.Second * 10)
-	//			if err != nil {
-	//				log.Println(err)
-	//				err = c.Close()
-	//				if err != nil {
-	//					log.Println(err)
-	//				}
-	//			}
-	//			data := make([]byte, 1024)
-	//			n, err := c.Read(data)
-	//			if err != nil {
-	//				log.Println(err)
-	//			} else {
-	//				err = c.CloseRead()
-	//			}
-	//			//fmt.Println(string(data))
-	//			str := SplitString(data[:n], []byte("*$"))
-	//			msg := make([]byte, 0)
-	//			switch string(str[0]) {
-	//			case "get":
-	//				msg = slot.Get(str[1])
-	//			case "set":
-	//				if len(str) == 3 {
-	//					slot.Set(string(str[1]), string(str[2]), 0)
-	//				} else if len(str) == 4 {
-	//					ns, err := strconv.Atoi(string(str[3]))
-	//					if err == nil {
-	//						slot.Set(string(str[1]), string(str[2]), ns)
-	//					} else {
-	//					}
-	//				}
-	//			default:
-	//				msg = []byte{0x65, 0x72, 0x72, 0x6F, 0x72}
-	//			}
-	//			_, err = c.Write([]byte(msg))
-	//			if err != nil {
-	//				log.Println(err)
-	//			} else {
-	//				err = c.CloseWrite()
-	//			}
-	//			//err = c.Close()
-	//			//if err != nil {
-	//			//	log.Println(err)
-	//			//}
-	//		}(c)
-	//	}
-	//}
-	//tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
+
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		log.Println(err)
@@ -210,6 +145,45 @@ func client(config Config) {
 	fmt.Println("\n\nserver is listening =>", a.Addr().String())
 	fmt.Println("server is running   =>", os.Getpid())
 	go listenAllSlotAction()
+	//  这里用来区分稳定的长连接
+	if config.KeepAlive {
+		for {
+			c, err := a.Accept()
+			if err != nil {
+				log.Println(err)
+			}
+			go func(co net.Conn) {
+				tcpP, ok := co.(*net.TCPConn)
+				if !ok {
+					log.Println(ok)
+					return
+				}
+				for {
+					data := make([]byte, 1024)
+					n, err := c.Read(data)
+					//str := SplitString(data[:n], []byte("*$"))
+					msg := make([]byte, 0)
+					switch data[0] {
+					case 0:
+						msg = slot.Delete(data[:n])
+					case 1:
+						msg = slot.Set(data[:n])
+						//return SendStatusMessage()
+					case 2:
+						msg = slot.Get(data[:n])
+					case 3:
+					case 4: // close this connection
+						break
+					}
+					_, err = c.Write(msg)
+					if err != nil {
+						log.Println(err)
+					}
+				}
+				tcpP.Close()
+			}(c)
+		}
+	}
 	// 应该写嵌入式了
 	for {
 		c, err := a.Accept()
@@ -233,42 +207,6 @@ func client(config Config) {
 				// storage  into the current path
 				slot.Storage()
 			}
-			//switch string(str[0]) {
-			//case "get":
-			//	msg = slot.Get(str[1])
-			//case "set":
-			//	if len(str) == 3 {
-			//		slot.Set(string(str[1]), string(str[2]), 0)
-			//		//msg = "1"
-			//	} else if len(str) == 4 {
-			//		ns, err := strconv.Atoi(string(str[3]))
-			//		if err == nil {
-			//			slot.Set(string(str[1]), string(str[2]), ns)
-			//			//msg = "1"
-			//		} else {
-			//			//msg = ""
-			//		}
-			//	}
-			//case "reset":
-			//	rWeigh, err := strconv.Atoi(string(str[3]))
-			//	if err != nil {
-			//		log.Println(err)
-			//	} else {
-			//		rName := string(str[1])
-			//		rIp := string(str[2])
-			//		rPwd := string(str[4])
-			//		p := DNode{
-			//			Name:  rName,
-			//			IP:    rIp,
-			//			Weigh: rWeigh,
-			//			Pwd:   rPwd,
-			//		}
-			//		AllSlot = append(AllSlot, p)
-			//		action <- 1
-			//	}
-			//default:
-			//	msg = []byte{0x65, 0x72, 0x72, 0x6F, 0x72}
-			//}
 			_, err = c.Write(msg)
 			if err != nil {
 				log.Println(err)
