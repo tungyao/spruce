@@ -111,7 +111,7 @@ func (h *Hash) Set(key []byte, value []byte, expTime int64) int {
 		}
 		return int(pos)
 	}
-	for d.next.check == true {
+	for d.next != nil && d.next.check == true {
 		d = d.next
 	}
 	h.clone += 1

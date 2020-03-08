@@ -1,14 +1,12 @@
 package spruce
 
 import (
-	"fmt"
-	"path/filepath"
 	"io/ioutil"
-	"time"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 )
-
 
 // save memory data to local , default 60s run one ,but you can advance or delay ，
 // save self's data
