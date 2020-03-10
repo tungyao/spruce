@@ -1,14 +1,13 @@
 package spruce
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
 
 type node struct {
 	key   []byte
-	value []byte
+	value interface{}
 	at    int64 `insertion time -> unix time -> second`
 	et    int64 `Expiration time -> second`
 	next  *node
@@ -50,7 +49,7 @@ func CreateHash(n int) *Hash {
 	}
 
 }
-func find(key []byte, node *node) []byte {
+func find(key []byte, node *node) interface{} {
 	tmp := node
 	if tmp == nil || (time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0) {
 		//tmp.check = false
@@ -63,7 +62,6 @@ func find(key []byte, node *node) []byte {
 		}
 		break
 	}
-	fmt.Println(&tmp)
 	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
 		//tmp = tmp.next
 		tmp.check = false
@@ -127,7 +125,7 @@ func (h *Hash) Set(key []byte, value []byte, expTime int64) int {
 	}
 	return int(pos)
 }
-func (h *Hash) Get(key []byte) []byte {
+func (h *Hash) Get(key []byte) interface{} {
 	pos := h.GetHashPos(key)
 	return find(key, h.ver[pos])
 }
@@ -210,7 +208,7 @@ func FindAll(n []*node) []byte {
 		for t != nil {
 			if len(t.key) != 0 {
 				data = append(data)
-				fmt.Println(string(t.key), string(t.value))
+				//fmt.Println(string(t.key), string(t.value))
 			}
 			t = t.next
 		}

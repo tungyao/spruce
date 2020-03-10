@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"testing"
 )
@@ -22,8 +23,27 @@ func TestNet(t *testing.T) {
 }
 
 func handleConnection(conn net.Conn) {
-	defer conn.Close()
-
-	fmt.Println(conn.LocalAddr())
-	_, _ = conn.Write([]byte("HELLO"))
+	tcpC, ok := conn.(*net.TCPConn)
+	if !ok {
+		log.Println(ok)
+	}
+	//er:=tcpC.SetKeepAlive(true)
+	//if er!=nil{
+	//    log.Println(er)
+	//}
+	//tcpC.SetKeepAlivePeriod(time.Second * 30)
+	d := make([]byte, 1024)
+	for {
+		n, err := tcpC.Read(d)
+		if err != nil {
+			log.Println(err)
+		}
+		//tcpC.CloseRead()
+		fmt.Println(string(d[:n]))
+		n, err = tcpC.Write(d[:n])
+		log.Println(n)
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }

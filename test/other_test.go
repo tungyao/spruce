@@ -2,6 +2,7 @@ package test
 
 import (
 	"../../spruce"
+	"fmt"
 	"testing"
 )
 
@@ -16,7 +17,7 @@ func TestStringToInt(t *testing.T) {
 	//spruce.SendSetMessage([]byte("hello"),"")
 }
 func TestByte(t *testing.T) {
-	t.Log(spruce.ParsingExpirationDate([]byte{28,32}))
+	t.Log(spruce.ParsingExpirationDate([]byte{28, 32}))
 	t.Log(spruce.ParsingExpirationDate(7200))
 }
 func StringToInt(a string) int {
@@ -38,4 +39,32 @@ func StringToInt(a string) int {
 	} else {
 		return int(cutoff - 1)
 	}
+}
+func TestChannel(t *testing.T) {
+	cha := make(chan int, 10)
+	go func(c chan int) {
+		for v := range c {
+			fmt.Println(v)
+		}
+	}(cha)
+	go func(c chan int) {
+		select {
+		case cha <- 0:
+			fmt.Println("put key")
+		}
+	}(cha)
+	for i := 0; i < 100; i++ {
+		cha <- i
+	}
+}
+func removeDuplicates(nums []int) int {
+	in := make(map[int]int)
+	out := make([]int, 0)
+	for _, v := range nums {
+		if in[v] == 0 {
+			in[v] = 1
+			out = append(out, v)
+		}
+	}
+	return out
 }

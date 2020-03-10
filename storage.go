@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -40,20 +41,20 @@ func localStorageFileRead() {
 					x := 0
 					for c, j := range ad[p:k] {
 						if j == 0xFE {
-							if len(key) == 0 {
-								key = ad[p:k][x:c]
-								x = c
-							}
-							if len(val) == 0 {
-								val = ad[p:k][x:c]
-								x = c
-							}
-							if len(tim) == 0 {
-								tim = ad[p:k][x:c]
-								x = c
-							}
+							x = c
+						}
+						if j == 0xFD {
+							key = ad[p:k][:x]
+							val = ad[p:k][x:c]
+							tim = ad[p:k][c:]
 						}
 					}
+					ti, err := strconv.ParseInt(string(tim), 10, 10)
+					if err != nil {
+						log.Println(err)
+						continue
+					}
+					balala.Set(key, val, ti)
 				}
 				p = k
 			}
@@ -66,7 +67,7 @@ func localStorageFileRead() {
 func remoteStoregeFile() {
 	// 获取所有远程机器
 	oAll := AllSlot
-	// 饭后依次遍历 ，让其他电脑也同事备份
+	// 饭后依次遍历 ，让其他电脑也同时备份
 	for _, v := range oAll {
 		go getRemote([]byte("*"), v.IP)
 	}
