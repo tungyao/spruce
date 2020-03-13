@@ -6,21 +6,20 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 )
 
 // save memory data to local , default 60s run one ,but you can advance or delay ，
 // save self's data
-func localStorageFile() {
-	allkey := balala.Get([]byte("*"))
-	//fmt.Println(allkey)
-	fs, err := os.OpenFile(string(MD5([]byte(time.Now().String())))+".spb", os.O_CREATE|os.O_WRONLY, 666)
-	if err != nil {
-		log.Println(err)
-	}
-	defer fs.Close()
-	_, err = fs.Write(Encrypt([]byte(allkey)))
-}
+//func localStorageFile() {
+//	allkey := balala.Get([]byte("*"))
+//	//fmt.Println(allkey)
+//	fs, err := os.OpenFile(string(MD5([]byte(time.Now().String())))+".spb", os.O_CREATE|os.O_WRONLY, 666)
+//	if err != nil {
+//		log.Println(err)
+//	}
+//	defer fs.Close()
+//	_, err = fs.Write(Encrypt([]byte(allkey)))
+//}
 
 // this method will read [.spb file] form current folder,and load into memory
 func localStorageFileRead() {

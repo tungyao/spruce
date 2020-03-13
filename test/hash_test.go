@@ -2,6 +2,7 @@ package test
 
 import (
 	"../../spruce"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -25,6 +26,12 @@ func TestHash(t *testing.T) {
 func TestReplace(t *testing.T) {
 	a := "abcd\n\t\r摇动"
 	fmt.Println(spruce.ReplaceTabCharacter([]byte(a)))
+	spruce.ToBytes([]byte("hello world"))
+	fmt.Println(json.Marshal(S{A:"asdasd"}))
+}
+
+type S struct {
+	A string
 }
 func TestGHash(t *testing.T) {
 	hash := make(map[string]string, 10240)

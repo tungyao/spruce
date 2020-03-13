@@ -17,13 +17,15 @@ const (
 )
 
 type Config struct {
-	ConfigType    int         `配置方式`
-	DCSConfigFile string      `分布式的配置文件路径`
-	DCSConfigs    []DCSConfig `采用内存的方式部署`
-	Addr          string      `跑在哪个端口上`
-	NowIP         string      `当前服务器运行的IP地址 暂时必须`
-	KeepAlive     bool
-	IsBackup      bool
+	ConfigType      int         `配置方式`
+	DCSConfigFile   string      `分布式的配置文件路径`
+	DCSConfigs      []DCSConfig `采用内存的方式部署`
+	Addr            string      `跑在哪个端口上`
+	NowIP           string      `当前服务器运行的IP地址 暂时必须`
+	KeepAlive       bool
+	IsBackup        bool `自动备份`
+	ConnChanBufSize int  `连接信道缓冲区大小`
+	ConnChanMaxSize int  `最大连接数`
 }
 type DCSConfig struct {
 	Name     string
@@ -94,9 +96,11 @@ func New(config Config) *Slot {
 // TODO Start
 func StartSpruceDistributed(config Config) *Slot {
 	CheckConfig(&config, Config{
-		ConfigType:    FILE,
-		DCSConfigFile: "./spruce.yml",
-		Addr:          ":9102",
+		ConfigType:      FILE,
+		DCSConfigFile:   "./spruce.yml",
+		Addr:            ":9102",
+		ConnChanBufSize: 2048,
+		ConnChanMaxSize: 2048,
 	})
 	// region print logo
 	fmt.Print(`
@@ -141,9 +145,28 @@ func client(config Config) {
 		log.Println(err)
 		return
 	}
+	defer a.Close()
 	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
 	fmt.Println("\n\nserver is listening =>", a.Addr().String())
 	fmt.Println("server is running   =>", os.Getpid())
+	connChan := make(chan net.Conn, config.ConnChanBufSize)
+	connChanSize := make(chan int)
+	connSize := 0
+	go func() {
+		for cc := range connChanSize {
+			connSize += cc
+		}
+	}()
+	for i := 0; i < config.ConnChanMaxSize; i++ {
+		go func() {
+			for conn := range connChan {
+				connChanSize <- 1
+				EchoNoKeepAlive(conn, slot)
+				connChanSize <- 1
+			}
+		}()
+	}
+	// 监听所有的slot
 	go listenAllSlotAction()
 	//  这里用来区分稳定的长连接
 	if config.KeepAlive {
@@ -170,7 +193,7 @@ func client(config Config) {
 						msg = slot.Set(data[:n])
 						//return SendStatusMessage()
 					case 2:
-						msg = slot.Get(data[:n])
+						msg = slot.Get(data[:n]).([]byte)
 					case 3:
 					case 4: // close this connection
 						break
@@ -190,38 +213,47 @@ func client(config Config) {
 		if err != nil {
 			log.Println(err)
 		}
-		go func(c net.Conn) {
-			data := make([]byte, 1024)
-			n, err := c.Read(data)
-			//str := SplitString(data[:n], []byte("*$"))
-			msg := make([]byte, 0)
-			switch data[0] {
-			case 0:
-				msg = slot.Delete(data[:n])
-			case 1:
-				msg = slot.Set(data[:n])
-				//return SendStatusMessage()
-			case 2:
-				msg = slot.Get(data[:n])
-			case 3:
-				// storage  into the current path
-				slot.Storage()
-			}
-			_, err = c.Write(msg)
-			if err != nil {
-				log.Println(err)
-			}
-			err = c.Close()
-		}(c)
-
+		connChan <- c
 	}
 	//}
 
 }
+func EchoNoKeepAlive(c net.Conn, slot *Slot) {
+	defer func() {
+		x := recover()
+		log.Println("223 line", x)
+		c.Close()
+	}()
+	data := make([]byte, 1024)
+	n, err := c.Read(data)
+	//str := SplitString(data[:n], []byte("*$"))
+	msg := make([]byte, 0)
+	switch data[0] {
+	case 0:
+		msg = slot.Delete(data[:n])
+	case 1:
+		msg = slot.Set(data[:n])
+		//return SendStatusMessage()
+	case 2:
+		getValue := slot.Get(data[:n])
+		if getValue == nil {
+			msg = nil
+		} else {
+			msg = getValue.([]byte)
+		}
+	case 3:
+		// storage  into the current path
+		slot.Storage()
+	}
+	_, err = c.Write(msg)
+	if err != nil {
+		log.Println(err)
+	}
+}
 func (s *Slot) Storage() {
 	balala.Storage()
 }
-func (s *Slot) Get(lang []byte) []byte {
+func (s *Slot) Get(lang []byte) interface{} {
 	n := s.getHashPos(lang[11:])
 	fmt.Println("get value of", n, "slot", string(lang[11:]))
 	if s.All[n].IP == s.Face.IP {
@@ -512,7 +544,7 @@ func memoryServeHandleConn(c net.Conn, slot *Slot) {
 		msg = slot.Set(data[:n])
 		//return SendStatusMessage()
 	case 2:
-		msg = slot.Get(data[:n])
+		msg = slot.Get(data[:n]).([]byte)
 	case 3:
 	}
 	_, err = c.Write(msg)
@@ -541,7 +573,7 @@ func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 		msg = slot.Set(data[:n])
 		//return SendStatusMessage()
 	case 2:
-		msg = slot.Get(data[:n])
+		msg = slot.Get(data[:n]).([]byte)
 	case 3:
 	}
 end:

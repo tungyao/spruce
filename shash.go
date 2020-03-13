@@ -1,6 +1,10 @@
 package spruce
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -207,6 +211,7 @@ func FindAll(n []*node) []byte {
 		t := v
 		for t != nil {
 			if len(t.key) != 0 {
+				//x := make([]byte, 0)
 				data = append(data)
 				//fmt.Println(string(t.key), string(t.value))
 			}
@@ -214,6 +219,22 @@ func FindAll(n []*node) []byte {
 		}
 	}
 	return nil
+}
+
+// set all thing to bytes
+func ToBytes(x interface{}) ([]byte, error) {
+	fmt.Println(reflect.TypeOf(x).Kind())
+	switch reflect.TypeOf(x).Kind() {
+	case reflect.String:
+		return []byte(x.(string)), nil
+	case reflect.Slice:
+		return x.([]byte), nil
+	case reflect.Struct:
+		return json.Marshal(x)
+	case reflect.Ptr:
+
+	}
+	return nil, errors.New("have no matched")
 }
 
 // replace tab character function
