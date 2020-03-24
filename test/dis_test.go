@@ -11,10 +11,10 @@ func TestDIS2(t *testing.T) {
 	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.FILE,
 		DCSConfigFile: "./config.yml",
-		Addr:          "127.0.0.1:88",
+		Addr:          "127.0.0.1:9102",
 		KeepAlive:     false,
 		IsBackup:      false,
-		NowIP:         "127.0.0.1:88",
+		NowIP:         "192.168.0.102:9102",
 	})
 }
 func TestBack(t *testing.T) {
@@ -29,28 +29,54 @@ func TestBack(t *testing.T) {
 	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
-	var edges = make([][]int, 0)
-	edges = append(edges, []int{1, 2})
-	go spruce.StartSpruceDistributed(spruce.Config{
+	conf:=make([]spruce.DCSConfig,2)
+	conf[0] = spruce.DCSConfig{
+		Name:     "master",
+		Ip:       "127.0.0.1:81",
+		Weigh:    2,
+		Password: "",
+	}
+	conf[1] = spruce.DCSConfig{
+		Name:     "node",
+		Ip:       "127.0.0.1:82",
+		Weigh:    1,
+		Password: "",
+	}
+
+	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.MEMORY,
 		DCSConfigFile: "",
-		DCSConfigs:    nil,
-		Addr:          "",
-		NowIP:         "",
+		DCSConfigs:    conf,
+		Addr:          ":81",
+		NowIP:         "127.0.0.1:81",
 		KeepAlive:     false,
 		IsBackup:      false,
 	})
-	//a, err := net.Listen("tcp", ":79")
-	//if err != nil {
-	//	log.Println(err)
-	//	return
-	//}
-	//for {
-	//	l, _ := a.Accept()
-	//	spruce.New().Set("hello", "world")
-	//	t.Log(spruce.New().Get("hello"))
-	//	l.Close()
-	//}
+}
+func TestDIS4(t *testing.T) {
+	conf:=make([]spruce.DCSConfig,2)
+	conf[0] = spruce.DCSConfig{
+		Name:     "master",
+		Ip:       "127.0.0.1:81",
+		Weigh:    2,
+		Password: "",
+	}
+	conf[1] = spruce.DCSConfig{
+		Name:     "node",
+		Ip:       "127.0.0.1:82",
+		Weigh:    1,
+		Password: "",
+	}
+
+	spruce.StartSpruceDistributed(spruce.Config{
+		ConfigType:    spruce.MEMORY,
+		DCSConfigFile: "",
+		DCSConfigs:    conf,
+		Addr:          ":82",
+		NowIP:         "127.0.0.1:82",
+		KeepAlive:     false,
+		IsBackup:      false,
+	})
 }
 func TestSplit(t *testing.T) {
 	t.Log(spruce.SplitString([]byte("set**hello**word"), []byte("**")))

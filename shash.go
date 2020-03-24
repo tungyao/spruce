@@ -84,7 +84,7 @@ func newNode(k, v []byte, deep int, exptime int64) *node {
 		dl:    0,
 	}
 }
-func (h *Hash) Set(key []byte, value []byte, expTime int64) int {
+func (h *Hash) Set(key []byte, value interface{}, expTime int64) int {
 	pos := h.GetHashPos(key)
 	d := h.ver[pos]
 	if d == nil {

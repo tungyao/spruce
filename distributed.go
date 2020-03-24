@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/rpc"
 	"os"
 	"strconv"
 	"sync"
@@ -50,7 +51,7 @@ type Slot struct {
 
 var (
 	AllSlot      []DNode
-	slot         int
+	slot         *Slot
 	balala       = CreateHash(4096)
 	randomMutex  = sync.Mutex{}
 	mux          sync.Mutex
@@ -121,7 +122,7 @@ use ordinary map functions as easily `)
 	case FILE:
 		client(config)
 	case MEMORY:
-		return createMemory(config)
+		createMemory(config)
 	}
 	return nil
 }
@@ -137,18 +138,76 @@ func initDNode(p string) *Slot {
 
 // TODO Client
 func client(config Config) {
-	slot := initDNode(config.DCSConfigFile)
+	slot = initDNode(config.DCSConfigFile)
 	slot.Face.IP = config.NowIP
 
+	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
+	fmt.Println("server is running   =>", os.Getpid())
+	// 启动RPC 要判断如果只有一台主机则不能启动RPC
+	if slot.Count <= 1 {
+		NoRpcServer(&config)
+	} else { //大于一台则只能只用RPC
+		RpcStart(config.Addr)
+	}
+	// 监听所有的slot
+	//go listenAllSlotAction()
+	////  这里用来区分稳定的长连接
+	//if config.KeepAlive {
+	//	for {
+	//		c, err := a.Accept()
+	//		if err != nil {
+	//			log.Println(err)
+	//		}
+	//		go func(co net.Conn) {
+	//			tcpP, ok := co.(*net.TCPConn)
+	//			if !ok {
+	//				log.Println(ok)
+	//				return
+	//			}
+	//			for {
+	//				data := make([]byte, 1024)
+	//				n, err := c.Read(data)
+	//				//str := SplitString(data[:n], []byte("*$"))
+	//				msg := make([]byte, 0)
+	//				switch data[0] {
+	//				case 0:
+	//					msg = slot.Delete(data[:n])
+	//				case 1:
+	//					msg = slot.Set(data[:n])
+	//					//return SendStatusMessage()
+	//				case 2:
+	//					msg = slot.Get(data[:n]).([]byte)
+	//				case 3:
+	//				case 4: // close this connection
+	//					break
+	//				}
+	//				_, err = c.Write(msg)
+	//				if err != nil {
+	//					log.Println(err)
+	//				}
+	//			}
+	//			tcpP.Close()
+	//		}(c)
+	//	}
+	//}
+	//// 应该写嵌入式了
+	//for {
+	//	c, err := a.Accept()
+	//	if err != nil {
+	//		log.Println(err)
+	//	}
+	//	connChan <- c
+	//}
+	//}
+
+}
+func NoRpcServer(config *Config) {
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	defer a.Close()
-	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
-	fmt.Println("\n\nserver is listening =>", a.Addr().String())
-	fmt.Println("server is running   =>", os.Getpid())
 	connChan := make(chan net.Conn, config.ConnChanBufSize)
 	connChanSize := make(chan int)
 	connSize := 0
@@ -166,57 +225,6 @@ func client(config Config) {
 			}
 		}()
 	}
-	// 监听所有的slot
-	go listenAllSlotAction()
-	//  这里用来区分稳定的长连接
-	if config.KeepAlive {
-		for {
-			c, err := a.Accept()
-			if err != nil {
-				log.Println(err)
-			}
-			go func(co net.Conn) {
-				tcpP, ok := co.(*net.TCPConn)
-				if !ok {
-					log.Println(ok)
-					return
-				}
-				for {
-					data := make([]byte, 1024)
-					n, err := c.Read(data)
-					//str := SplitString(data[:n], []byte("*$"))
-					msg := make([]byte, 0)
-					switch data[0] {
-					case 0:
-						msg = slot.Delete(data[:n])
-					case 1:
-						msg = slot.Set(data[:n])
-						//return SendStatusMessage()
-					case 2:
-						msg = slot.Get(data[:n]).([]byte)
-					case 3:
-					case 4: // close this connection
-						break
-					}
-					_, err = c.Write(msg)
-					if err != nil {
-						log.Println(err)
-					}
-				}
-				tcpP.Close()
-			}(c)
-		}
-	}
-	// 应该写嵌入式了
-	for {
-		c, err := a.Accept()
-		if err != nil {
-			log.Println(err)
-		}
-		connChan <- c
-	}
-	//}
-
 }
 func EchoNoKeepAlive(c net.Conn, slot *Slot) {
 	defer func() {
@@ -253,30 +261,102 @@ func EchoNoKeepAlive(c net.Conn, slot *Slot) {
 func (s *Slot) Storage() {
 	balala.Storage()
 }
+
+//func (s *Slot) Get(lang []byte) interface{} {
+//	n := s.getHashPos(lang[11:])
+//	fmt.Println("get value of", n, "slot", string(lang[11:]))
+//	if s.All[n].IP == s.Face.IP {
+//		return balala.Get(lang[11:])
+//	} else {
+//		return getRemote(SendGetMessage(lang[11:]), s.All[n].IP)
+//	}
+//}
+//func (s *Slot) Set(lang []byte) []byte {
+//	key, value := SplitKeyValue(lang[11:])
+//	ns := s.getHashPos(key)
+//	fmt.Println("set value to", s.Face.IP, "slot", string(key))
+//	if s.All[ns].IP == s.Face.IP {
+//		fmt.Println("save")
+//		ti := ParsingExpirationDate(lang[2:4]).(int64)
+//		it := balala.Set(key, value, ti)
+//		return []byte{uint8(it)}
+//	} else {
+//		return getRemote(lang, s.All[ns].IP)
+//	}
+//}
+// to rpc
 func (s *Slot) Get(lang []byte) interface{} {
 	n := s.getHashPos(lang[11:])
 	fmt.Println("get value of", n, "slot", string(lang[11:]))
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(lang[11:])
 	} else {
-		return getRemote(SendGetMessage(lang[11:]), s.All[n].IP)
+		return GetRpc(&OperationArgs{Key: lang[11:]}, s.All[n].IP)
 	}
-}
-func (s *Slot) Position(key []byte) int {
-	return int(s.getHashPos(key))
 }
 func (s *Slot) Set(lang []byte) []byte {
 	key, value := SplitKeyValue(lang[11:])
 	ns := s.getHashPos(key)
 	fmt.Println("set value to", s.Face.IP, "slot", string(key))
+	ti := ParsingExpirationDate(lang[2:4]).(int64)
 	if s.All[ns].IP == s.Face.IP {
 		fmt.Println("save")
-		ti := ParsingExpirationDate(lang[2:4]).(int64)
 		it := balala.Set(key, value, ti)
 		return []byte{uint8(it)}
 	} else {
-		return getRemote(lang, s.All[ns].IP)
+		return []byte{uint8(SetRpc(&OperationArgs{
+			Key:        key,
+			Value:      value,
+			Expiration: ti,
+		}, s.All[ns].IP))}
 	}
+}
+func GetRpc(args *OperationArgs, address string) interface{} {
+	defer func() {
+		x := recover()
+		log.Panicln(x)
+	}()
+	client, err := rpc.DialHTTP("tcp", address)
+	if err != nil {
+		log.Panicln(err)
+	}
+	var result interface{}
+	err = client.Call("Operation:Get", args, result)
+	if err != nil {
+		log.Panicln(err)
+	}
+	client.Close()
+	return result
+}
+func SetRpc(args *OperationArgs, address string) int {
+	defer func() {
+		x := recover()
+		log.Panicln(x)
+	}()
+	client, err := rpc.DialHTTP("tcp", address)
+	if err != nil {
+		log.Panicln(err)
+	}
+	var result int
+	err = client.Call("Operation:Set", args, result)
+	if err != nil {
+		log.Panicln(err)
+	}
+	client.Close()
+	return result
+}
+func getRemote(lang []byte, ip string) []byte {
+	con, err := net.Dial("tcp", ip)
+	if err != nil {
+		log.Println(320, err)
+		return nil
+	}
+	defer con.Close()
+	con.Write(lang)
+	return GetData(con)
+}
+func (s *Slot) Position(key []byte) int {
+	return int(s.getHashPos(key))
 }
 func (s *Slot) Delete(lang []byte) []byte {
 	key := lang[11:]
@@ -290,16 +370,6 @@ func (s *Slot) Delete(lang []byte) []byte {
 	} else {
 		return getRemote(lang, s.All[ns].IP)
 	}
-}
-func getRemote(lang []byte, ip string) []byte {
-	con, err := net.Dial("tcp", ip)
-	if err != nil {
-		log.Println(295, err)
-		return nil
-	}
-	defer con.Close()
-	con.Write(lang)
-	return GetData(con)
 }
 func GetData(a net.Conn) []byte {
 	out := make([][]byte, 0)
@@ -471,7 +541,7 @@ func listenAllSlotAction() {
 }
 
 // memory control 通过嵌入式来配置spruce
-func createMemory(config Config) *Slot {
+func createMemory(config Config) {
 	d := make([]DNode, len(config.DCSConfigs))
 	fmt.Print("\n\nrunning server\n")
 	fmt.Print("id", "\t", "name", "\t", "ip", "\t", "weigh", "\n")
@@ -486,8 +556,8 @@ func createMemory(config Config) *Slot {
 	}
 	slot := setAllDNode(d)
 	slot.Face.IP = config.NowIP
-	go createMemoryServe(config, slot)
-	return slot
+	createMemoryServe(config, slot)
+
 }
 func createMemoryServe(config Config, s *Slot) {
 	if config.KeepAlive {

@@ -14,7 +14,7 @@ var (
 
 func init() {
 	flag.BoolVar(&keep, "keep", false, "keep alive connect")
-	flag.StringVar(&addr, "addr", "127.0.0.1:88", "listen port")
+	flag.StringVar(&addr, "addr", "127.0.0.1:81", "listen port")
 }
 func main() {
 	//tcpAddr, err := net.ResolveTCPAddr("tcp", addr) //创建 tcpAddr数据
@@ -27,14 +27,13 @@ func main() {
 	//	return
 	//}
 	for {
-
 		var operation string
 		var key string
 		var value string
 		fmt.Print(addr + ">> ")
 		c, err := net.Dial("tcp", addr)
 		if err != nil {
-			log.Println(err)
+			log.Panicln(err)
 		}
 		_, _ = fmt.Scanln(&operation, &key, &value)
 		if value != "" {
@@ -43,7 +42,10 @@ func main() {
 			_, _ = c.Write(EntryGet(key))
 		}
 		data := make([]byte, 1024)
-		n, _ := c.Read(data)
+		n, err:= c.Read(data)
+		if err != nil {
+			log.Println(err)
+		}
 		fmt.Println(string(data[:n]))
 		_ = c.Close()
 	}
