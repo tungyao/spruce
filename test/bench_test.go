@@ -1,28 +1,26 @@
 package test
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net"
 	"sync"
+	"testing"
 )
 
-var (
-	addr string
-	keep bool
-)
-
-func init() {
-	flag.BoolVar(&keep, "keep", false, "keep alive connect")
-	flag.StringVar(&addr, "addr", "127.0.0.1:81", "listen port")
+func BenchmarkRun(b *testing.B) {
+	b.StopTimer()
+	b.StartTimer()
+	for i := 0; i < b.N; i++ { //use b.N for looping
+		Method()
+	}
 }
-func main() {
+func Method() {
 	var wg sync.WaitGroup
 	for i := 0; i < 1000; i++ {
 		wg.Add(1)
 		go func() {
-			c, err := net.Dial("tcp", addr)
+			c, err := net.Dial("tcp", "127.0.0.1:81")
 			if err != nil {
 				log.Panicln(err)
 			}
@@ -41,7 +39,7 @@ func main() {
 	for i := 0; i < 1000; i++ {
 		wg.Add(1)
 		go func() {
-			c, err := net.Dial("tcp", addr)
+			c, err := net.Dial("tcp", "127.0.0.1:81")
 			if err != nil {
 				log.Panicln(err)
 			}
@@ -58,66 +56,6 @@ func main() {
 		}()
 	}
 	wg.Wait()
-
-	//tcpAddr, err := net.ResolveTCPAddr("tcp", addr) //创建 tcpAddr数据
-	//if err != nil {
-	//	log.Println(err,1)
-	//}
-	//a, err := net.ListenTCP("tcp", tcpAddr)
-	//if err != nil {
-	//	log.Println(err,2)
-	//	return
-	//}
-
-	//for {
-	//	var operation string
-	//	var key string
-	//	var value string
-	//	fmt.Print(addr + ">> ")
-	//	c, err := net.Dial("tcp", addr)
-	//	if err != nil {
-	//		log.Panicln(err)
-	//	}
-	//	_, _ = fmt.Scanln(&operation, &key, &value)
-	//	if value != "" {
-	//		_, _ = c.Write(EntrySet(key, value, 0))
-	//	} else {
-	//		_, _ = c.Write(EntryGet(key))
-	//	}
-	//	data := make([]byte, 1024)
-	//	n, err:= c.Read(data)
-	//	if err != nil {
-	//		log.Println(err)
-	//	}
-	//	fmt.Println(string(data[:n]))
-	//	_ = c.Close()
-	//}
-	//for {
-	//listen, err := a.AcceptTCP()
-	//listen, err := a.A()
-	//if err != nil {
-	//	log.Println(err,3)
-	//	return
-	//}
-	//go func(c *net.TCPConn) {
-	//	var operation string
-	//	var key string
-	//	var value string
-	//	fmt.Print(addr + ">> ")
-	//	_, _ = fmt.Scanln(&operation, &key, &value)
-	//	if value != "" {
-	//		_, _ = c.Write(EntrySet(key, value, 0))
-	//	} else {
-	//		_, _ = c.Write(EntryGet(key))
-	//	}
-	//	data := make([]byte, 1024)
-	//	n, _ := c.Read(data)
-	//	fmt.Println(string(data[:n]))
-	//	_ = c.Close()
-	//}(listen)
-
-	//}
-
 }
 func ParsingExpirationDate(tm interface{}) interface{} {
 	switch tm.(type) {

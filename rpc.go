@@ -19,10 +19,12 @@ type OperationArgs struct {
 }
 
 func (o *Operation) Get(args *OperationArgs, result *interface{}) error {
+	log.Println("rpc get =>", args)
 	*result = balala.Get(args.Key)
 	return nil
 }
 func (o *Operation) Set(args *OperationArgs, result *int) error {
+	log.Println("rpc set =>", args)
 	*result = balala.Set(args.Key, args.Value, args.Expiration)
 	return nil
 }

@@ -287,7 +287,7 @@ func (s *Slot) Storage() {
 // to rpc
 func (s *Slot) Get(lang []byte) interface{} {
 	n := s.getHashPos(lang[11:])
-	fmt.Println("get value of", n, "slot", string(lang[11:]))
+	fmt.Println("get value of", s.All[n].IP, "slot", string(lang[11:]))
 	if s.All[n].IP == s.Face.IP {
 		return balala.Get(lang[11:])
 	} else {
@@ -297,11 +297,11 @@ func (s *Slot) Get(lang []byte) interface{} {
 func (s *Slot) Set(lang []byte) []byte {
 	key, value := SplitKeyValue(lang[11:])
 	ns := s.getHashPos(key)
-	fmt.Println("set value to", s.Face.IP, "slot", string(key))
+	fmt.Println("set value to", s.All[ns].IP, "slot", string(key))
 	ti := ParsingExpirationDate(lang[2:4]).(int64)
 	if s.All[ns].IP == s.Face.IP {
-		fmt.Println("save")
 		it := balala.Set(key, value, ti)
+		fmt.Println("save")
 		return []byte{uint8(it)}
 	} else {
 		return []byte{uint8(SetRpc(&OperationArgs{
@@ -312,16 +312,16 @@ func (s *Slot) Set(lang []byte) []byte {
 	}
 }
 func GetRpc(args *OperationArgs, address string) interface{} {
-	defer func() {
-		x := recover()
-		log.Panicln(x)
-	}()
+	//defer func() {
+	//	x := recover()
+	//	log.Panicln(x)
+	//}()
 	client, err := rpc.DialHTTP("tcp", address)
 	if err != nil {
 		log.Panicln(err)
 	}
 	var result interface{}
-	err = client.Call("Operation:Get", args, result)
+	err = client.Call("Operation.Get", args, &result)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -329,20 +329,20 @@ func GetRpc(args *OperationArgs, address string) interface{} {
 	return result
 }
 func SetRpc(args *OperationArgs, address string) int {
-	defer func() {
-		x := recover()
-		log.Panicln(x)
-	}()
+	//defer func() {
+	//	x := recover()
+	//	log.Panicln(x)
+	//}()
 	client, err := rpc.DialHTTP("tcp", address)
 	if err != nil {
-		log.Panicln(err)
+		log.Panicln("338", err)
 	}
 	var result int
-	err = client.Call("Operation:Set", args, result)
+	err = client.Call("Operation.Set", args, &result)
 	if err != nil {
-		log.Panicln(err)
+		log.Panicln("343", err)
 	}
-	client.Close()
+	defer client.Close()
 	return result
 }
 func getRemote(lang []byte, ip string) []byte {
@@ -554,9 +554,14 @@ func createMemory(config Config) {
 		}
 		fmt.Print(k, "\t", v.Name, "\t", v.Ip, "\t", v.Weigh, "\n")
 	}
-	slot := setAllDNode(d)
+	slot = setAllDNode(d)
 	slot.Face.IP = config.NowIP
+	go RpcStart(":82")
+	//if slot.Count <= 1 {
 	createMemoryServe(config, slot)
+	//} else { //大于一台则只能只用RPC
+
+	//}
 
 }
 func createMemoryServe(config Config, s *Slot) {
@@ -592,19 +597,17 @@ func createMemoryServe(config Config, s *Slot) {
 	for {
 		c, err := a.Accept()
 		if err != nil {
-			log.Println(err)
+			log.Println("601", err)
 		}
-		go memoryServeHandleConn(c, s)
+		go memoryServeHandleConn(c)
 	}
 }
-func memoryServeHandleConn(c net.Conn, slot *Slot) {
+func memoryServeHandleConn(c net.Conn) {
 	data := make([]byte, 1024)
 	n, err := c.Read(data)
 	log.Println("get bytes", data[:n], n)
 	if err != nil {
 		log.Println(err)
-	} else {
-		err = c.Close()
 	}
 	msg := make([]byte, 0)
 	switch data[0] {
@@ -619,7 +622,7 @@ func memoryServeHandleConn(c net.Conn, slot *Slot) {
 	}
 	_, err = c.Write(msg)
 	if err != nil {
-		log.Println(err)
+		log.Println("628", err)
 	}
 	err = c.Close()
 }
@@ -646,6 +649,7 @@ func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 		msg = slot.Get(data[:n]).([]byte)
 	case 3:
 	}
+	goto end
 end:
 	_, err = c.Write(msg)
 	if err != nil {

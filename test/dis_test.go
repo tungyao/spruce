@@ -29,16 +29,16 @@ func TestBack(t *testing.T) {
 	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
-	conf:=make([]spruce.DCSConfig,2)
+	conf := make([]spruce.DCSConfig, 2)
 	conf[0] = spruce.DCSConfig{
 		Name:     "master",
-		Ip:       "127.0.0.1:81",
+		Ip:       "192.168.0.105:82",
 		Weigh:    2,
 		Password: "",
 	}
 	conf[1] = spruce.DCSConfig{
 		Name:     "node",
-		Ip:       "127.0.0.1:82",
+		Ip:       "192.168.0.114:82",
 		Weigh:    1,
 		Password: "",
 	}
@@ -48,22 +48,22 @@ func TestDIS3(t *testing.T) {
 		DCSConfigFile: "",
 		DCSConfigs:    conf,
 		Addr:          ":81",
-		NowIP:         "127.0.0.1:81",
+		NowIP:         "192.168.0.105:82",
 		KeepAlive:     false,
 		IsBackup:      false,
 	})
 }
 func TestDIS4(t *testing.T) {
-	conf:=make([]spruce.DCSConfig,2)
+	conf := make([]spruce.DCSConfig, 2)
 	conf[0] = spruce.DCSConfig{
 		Name:     "master",
-		Ip:       "127.0.0.1:81",
+		Ip:       "192.168.0.105:82",
 		Weigh:    2,
 		Password: "",
 	}
 	conf[1] = spruce.DCSConfig{
 		Name:     "node",
-		Ip:       "127.0.0.1:82",
+		Ip:       "192.168.0.114:82",
 		Weigh:    1,
 		Password: "",
 	}
@@ -73,7 +73,7 @@ func TestDIS4(t *testing.T) {
 		DCSConfigFile: "",
 		DCSConfigs:    conf,
 		Addr:          ":82",
-		NowIP:         "127.0.0.1:82",
+		NowIP:         "192.168.0.114:82",
 		KeepAlive:     false,
 		IsBackup:      false,
 	})
