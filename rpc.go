@@ -2,10 +2,11 @@ package spruce
 
 import (
 	"fmt"
+	awesome_pool "git.yaop.ink/awesome-pool"
 	"log"
 	"net"
-	"net/http"
 	"net/rpc"
+	"time"
 )
 
 // rpc method
@@ -18,6 +19,8 @@ type OperationArgs struct {
 	Expiration int64
 }
 
+// 心跳检测
+
 func (o *Operation) Get(args *OperationArgs, result *interface{}) error {
 	log.Println("rpc get =>", args)
 	*result = balala.Get(args.Key)
@@ -28,19 +31,98 @@ func (o *Operation) Set(args *OperationArgs, result *int) error {
 	*result = balala.Set(args.Key, args.Value, args.Expiration)
 	return nil
 }
-func RpcStart(address string) {
+
+type Watcher struct {
+	T []*awesome_pool.Pool
+}
+type WatcherData struct {
+	Time int64
+}
+
+//func (w *Watcher) Ping(ip string) int8 {
+//
+//}
+func (w *Watcher) Pong(args *WatcherData, result *int8) error {
+	var x int8 = 12
+	*result = x
+	return nil
+}
+func (w *Watcher) Do(args *WatcherData, result *int8) error {
+	var x int8 = 13
+	*result = x
+	return nil
+}
+func (w *Watcher) Dead(args *WatcherData, result *int8) error {
+	var x int8 = 14
+	*result = x
+	return nil
+}
+func startWatcher(dsc *[]DCSConfig) {
+	log.Println("starting rpc watcher ...")
+	log.Print(`
+ __     __     ______     ______   ______     __  __     ______     ______    
+/\ \  _ \ \   /\  __ \   /\__  _\ /\  ___\   /\ \_\ \   /\  ___\   /\  == \   
+\ \ \/ ".\ \  \ \  __ \  \/_/\ \/ \ \ \____  \ \  __ \  \ \  __\   \ \  __<   
+ \ \__/".~\_\  \ \_\ \_\    \ \_\  \ \_____\  \ \_\ \_\  \ \_____\  \ \_\ \_\ 
+  \/_/   \/_/   \/_/\/_/     \/_/   \/_____/   \/_/\/_/   \/_____/   \/_/ /_/ 
+
+`)
+	wc := new(Watcher)
+	wc.T = make([]*awesome_pool.Pool, len(*dsc))
+	goto Restart
+Restart:
+	var errx error
+	for k, v := range *dsc {
+		log.Println("ping address =>", v.Ip)
+		wc.T[k], errx = awesome_pool.NewPool(10, v.Ip)
+		if errx != nil {
+			log.Println("ready reconnection ......")
+			<-time.After(time.Second * 5)
+			goto Restart
+		}
+	}
+
+	for {
+		log.Println("monitor the watcher")
+		for _, v := range wc.T {
+			c, n := v.Get()
+			if c == nil {
+				log.Println("ready reconnection ......")
+				<-time.After(time.Second * 5)
+				v.Free()
+				goto Restart
+			}
+			client := rpc.NewClient(c)
+			var x int8
+			err := client.Call("Watcher.Pong", &WatcherData{}, &x)
+			if err != nil {
+				log.Println(err)
+			}
+			log.Println("get ping data =>", x)
+			client.Close()
+			v.Put(n)
+		}
+		<-time.After(time.Second * 2)
+	}
+}
+func RpcStart(address Config) {
+	newDCS := make([]DCSConfig, 0)
+	for _, v := range address.DCSConfigs {
+		if v.Ip != address.NowIP {
+			newDCS = append(newDCS, v)
+		}
+	}
 	err := rpc.Register(new(Operation))
+	err = rpc.Register(new(Watcher))
 	if err != nil {
 		log.Panicln(err)
 	}
-	rpc.HandleHTTP()
-	listen, err := net.Listen("tcp", address)
+	listen, err := net.Listen("tcp", ":82")
 	if err != nil {
 		log.Panicln(err)
 	}
-	fmt.Println("\n\nserver is listening =>", listen.Addr().String())
-	err = http.Serve(listen, nil)
-	if err != nil {
-		log.Panicln(err)
-	}
+	fmt.Println("\n\nRPC is listening =>", listen.Addr().String())
+	go startWatcher(&newDCS)
+	//rpc.NewServer()
+	rpc.Accept(listen)
 }

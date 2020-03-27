@@ -4,6 +4,7 @@ import (
 	"../../spruce"
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestOther(t *testing.T) {
@@ -57,14 +58,9 @@ func TestChannel(t *testing.T) {
 		cha <- i
 	}
 }
-func removeDuplicates(nums []int) int {
-	in := make(map[int]int)
-	out := make([]int, 0)
-	for _, v := range nums {
-		if in[v] == 0 {
-			in[v] = 1
-			out = append(out, v)
-		}
+func TestAfter(t *testing.T) {
+	for{
+		fmt.Println(1)
+		<-time.After(time.Second*1)
 	}
-	return out
 }

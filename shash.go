@@ -18,6 +18,7 @@ type node struct {
 	deep  int
 	check bool // 用来检测当前插槽是不是有值存在
 	dl    int8
+	mux   sync.RWMutex
 }
 type Hash struct {
 	ver   []*node
@@ -85,6 +86,8 @@ func newNode(k, v []byte, deep int, exptime int64) *node {
 	}
 }
 func (h *Hash) Set(key []byte, value interface{}, expTime int64) int {
+	h.rw.RLock()
+	defer h.rw.RUnlock()
 	pos := h.GetHashPos(key)
 	d := h.ver[pos]
 	if d == nil {

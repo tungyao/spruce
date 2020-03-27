@@ -147,7 +147,7 @@ func client(config Config) {
 	if slot.Count <= 1 {
 		NoRpcServer(&config)
 	} else { //大于一台则只能只用RPC
-		RpcStart(config.Addr)
+		RpcStart(config)
 	}
 	// 监听所有的slot
 	//go listenAllSlotAction()
@@ -556,7 +556,7 @@ func createMemory(config Config) {
 	}
 	slot = setAllDNode(d)
 	slot.Face.IP = config.NowIP
-	go RpcStart(":82")
+	go RpcStart(config)
 	//if slot.Count <= 1 {
 	createMemoryServe(config, slot)
 	//} else { //大于一台则只能只用RPC
@@ -603,11 +603,13 @@ func createMemoryServe(config Config, s *Slot) {
 	}
 }
 func memoryServeHandleConn(c net.Conn) {
-	data := make([]byte, 1024)
+	data := make([]byte, 512)
 	n, err := c.Read(data)
-	log.Println("get bytes", data[:n], n)
-	if err != nil {
+	//log.Println("get bytes", data[:n], n)
+	if err != nil || n < 11 {
 		log.Println(err)
+		c.Close()
+		return
 	}
 	msg := make([]byte, 0)
 	switch data[0] {
@@ -629,7 +631,7 @@ func memoryServeHandleConn(c net.Conn) {
 func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 	data := make([]byte, 1024)
 	n, err := c.Read(data)
-	log.Println("get bytes", string(data[:n]), n)
+	//log.Println("get bytes", string(data[:n]), n)
 	if err != nil {
 		log.Println(err)
 	} else {
@@ -653,7 +655,7 @@ func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 end:
 	_, err = c.Write(msg)
 	if err != nil {
-		log.Println(err)
+		log.Println("656", err)
 	}
 	err = c.Close()
 }

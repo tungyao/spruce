@@ -9,18 +9,23 @@ import (
 )
 
 func BenchmarkRun(b *testing.B) {
-	b.StopTimer()
-	b.StartTimer()
-	for i := 0; i < b.N; i++ { //use b.N for looping
+	for i := 0; i < b.N; i++ {
+		Method()
+	}
+}
+func TestRun(t *testing.T) {
+	for i := 0; i < 1; i++ { //use b.N for looping
 		Method()
 	}
 }
 func Method() {
 	var wg sync.WaitGroup
-	for i := 0; i < 1000; i++ {
+	var allc =make(chan int,2000)
+	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func() {
 			c, err := net.Dial("tcp", "127.0.0.1:81")
+			allc<-i
 			if err != nil {
 				log.Panicln(err)
 			}
@@ -36,7 +41,7 @@ func Method() {
 			wg.Add(-1)
 		}()
 	}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func() {
 			c, err := net.Dial("tcp", "127.0.0.1:81")

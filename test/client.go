@@ -19,7 +19,7 @@ func init() {
 }
 func main() {
 	var wg sync.WaitGroup
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func() {
 			c, err := net.Dial("tcp", addr)
@@ -38,7 +38,7 @@ func main() {
 			wg.Add(-1)
 		}()
 	}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func() {
 			c, err := net.Dial("tcp", addr)
