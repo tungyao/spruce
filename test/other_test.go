@@ -64,3 +64,22 @@ func TestAfter(t *testing.T) {
 		<-time.After(time.Second*1)
 	}
 }
+func init() {
+	fmt.Println(1)
+}
+func init() {
+	fmt.Println(2)
+}
+func init() {
+	fmt.Println(3)
+}
+func TestOne(t *testing.T) {
+	d:=[]int{1,2,3,5}
+	fmt.Println(d[:2])
+	fmt.Println(d[2:])
+	var s []int
+	s=append(s,1)
+	var m map[string]int
+	m["one"] =1
+}
+

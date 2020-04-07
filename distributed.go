@@ -50,14 +50,12 @@ type Slot struct {
 }
 
 var (
-	AllSlot      []DNode
-	slot         *Slot
-	balala       = CreateHash(4096)
-	randomMutex  = sync.Mutex{}
-	mux          sync.Mutex
-	action       chan int // 1 是增加 -1 是减少 // 10个缓冲
-	nMessageRing *MessageRing
-	pMsg         chan msg
+	AllSlot     []DNode
+	slot        *Slot
+	balala      = CreateHash(4096)
+	randomMutex = sync.Mutex{}
+	mux         sync.Mutex
+	action      chan int // 1 是增加 -1 是减少 // 10个缓冲
 )
 
 // TODO Node
@@ -556,7 +554,9 @@ func createMemory(config Config) {
 	}
 	slot = setAllDNode(d)
 	slot.Face.IP = config.NowIP
-	go RpcStart(config)
+	if len(config.DCSConfigs) > 1 {
+		go RpcStart(config)
+	}
 	//if slot.Count <= 1 {
 	createMemoryServe(config, slot)
 	//} else { //大于一台则只能只用RPC
@@ -603,6 +603,7 @@ func createMemoryServe(config Config, s *Slot) {
 	}
 }
 func memoryServeHandleConn(c net.Conn) {
+	defer c.Close()
 	data := make([]byte, 512)
 	n, err := c.Read(data)
 	//log.Println("get bytes", data[:n], n)
@@ -619,14 +620,17 @@ func memoryServeHandleConn(c net.Conn) {
 		msg = slot.Set(data[:n])
 		//return SendStatusMessage()
 	case 2:
-		msg = slot.Get(data[:n]).([]byte)
+		if m := slot.Get(data[:n]);m == nil {
+			msg = []byte{}
+		}else{
+			msg = m.([]byte)
+		}
 	case 3:
 	}
 	_, err = c.Write(msg)
 	if err != nil {
 		log.Println("628", err)
 	}
-	err = c.Close()
 }
 func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 	data := make([]byte, 1024)

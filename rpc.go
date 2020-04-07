@@ -2,7 +2,7 @@ package spruce
 
 import (
 	"fmt"
-	awesome_pool "git.yaop.ink/awesome-pool"
+	awesome "git.yaop.ink/tungyao/awesome-pool"
 	"log"
 	"net"
 	"net/rpc"
@@ -31,9 +31,8 @@ func (o *Operation) Set(args *OperationArgs, result *int) error {
 	*result = balala.Set(args.Key, args.Value, args.Expiration)
 	return nil
 }
-
 type Watcher struct {
-	T []*awesome_pool.Pool
+	T []*awesome.Pool
 }
 type WatcherData struct {
 	Time int64
@@ -60,21 +59,21 @@ func (w *Watcher) Dead(args *WatcherData, result *int8) error {
 func startWatcher(dsc *[]DCSConfig) {
 	log.Println("starting rpc watcher ...")
 	log.Print(`
- __     __     ______     ______   ______     __  __     ______     ______    
-/\ \  _ \ \   /\  __ \   /\__  _\ /\  ___\   /\ \_\ \   /\  ___\   /\  == \   
-\ \ \/ ".\ \  \ \  __ \  \/_/\ \/ \ \ \____  \ \  __ \  \ \  __\   \ \  __<   
- \ \__/".~\_\  \ \_\ \_\    \ \_\  \ \_____\  \ \_\ \_\  \ \_____\  \ \_\ \_\ 
-  \/_/   \/_/   \/_/\/_/     \/_/   \/_____/   \/_/\/_/   \/_____/   \/_/ /_/ 
+__     __     ______     ______   ______     __  __     ______     ______
+/\ \  _ \ \   /\  __ \   /\__  _\ /\  ___\   /\ \_\ \   /\  ___\   /\  == \
+\ \ \/ ".\ \  \ \  __ \  \/_/\ \/ \ \ \____  \ \  __ \  \ \  __\   \ \  __<
+\ \__/".~\_\  \ \_\ \_\    \ \_\  \ \_____\  \ \_\ \_\  \ \_____\  \ \_\ \_\
+ \/_/   \/_/   \/_/\/_/     \/_/   \/_____/   \/_/\/_/   \/_____/   \/_/ /_/
 
 `)
 	wc := new(Watcher)
-	wc.T = make([]*awesome_pool.Pool, len(*dsc))
+	wc.T = make([]*awesome.Pool, len(*dsc))
 	goto Restart
 Restart:
 	var errx error
 	for k, v := range *dsc {
 		log.Println("ping address =>", v.Ip)
-		wc.T[k], errx = awesome_pool.NewPool(10, v.Ip)
+		wc.T[k], errx = awesome.NewPool(10, v.Ip)
 		if errx != nil {
 			log.Println("ready reconnection ......")
 			<-time.After(time.Second * 5)

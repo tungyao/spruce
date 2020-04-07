@@ -29,19 +29,19 @@ func TestBack(t *testing.T) {
 	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
-	conf := make([]spruce.DCSConfig, 2)
+	conf := make([]spruce.DCSConfig, 1)
 	conf[0] = spruce.DCSConfig{
 		Name:     "master",
 		Ip:       "192.168.0.105:82",
 		Weigh:    2,
 		Password: "",
 	}
-	conf[1] = spruce.DCSConfig{
-		Name:     "node",
-		Ip:       "192.168.0.114:82",
-		Weigh:    1,
-		Password: "",
-	}
+	//conf[1] = spruce.DCSConfig{
+	//	Name:     "node",
+	//	Ip:       "192.168.0.114:82",
+	//	Weigh:    1,
+	//	Password: "",
+	//}
 
 	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.MEMORY,
