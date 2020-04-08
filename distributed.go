@@ -299,8 +299,8 @@ func (s *Slot) Set(lang []byte) []byte {
 	ti := ParsingExpirationDate(lang[2:4]).(int64)
 	if s.All[ns].IP == s.Face.IP {
 		it := balala.Set(key, value, ti)
-		fmt.Println("save")
-		return []byte{uint8(it)}
+		fmt.Println("saved", it)
+		return []byte(strconv.Itoa(it))
 	} else {
 		return []byte{uint8(SetRpc(&OperationArgs{
 			Key:        key,
@@ -620,9 +620,9 @@ func memoryServeHandleConn(c net.Conn) {
 		msg = slot.Set(data[:n])
 		//return SendStatusMessage()
 	case 2:
-		if m := slot.Get(data[:n]);m == nil {
+		if m := slot.Get(data[:n]); m == nil {
 			msg = []byte{}
-		}else{
+		} else {
 			msg = m.([]byte)
 		}
 	case 3:

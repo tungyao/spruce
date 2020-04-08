@@ -42,7 +42,6 @@ func TestDIS3(t *testing.T) {
 	//	Weigh:    1,
 	//	Password: "",
 	//}
-
 	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.MEMORY,
 		DCSConfigFile: "",
@@ -52,6 +51,16 @@ func TestDIS3(t *testing.T) {
 		KeepAlive:     false,
 		IsBackup:      false,
 	})
+}
+func TestClock(t *testing.T) {
+	n := spruce.NewClockTask(2)
+	n.NewClock("test1", func() {
+		fmt.Println("123")
+	})
+	n.NewClock("test2", func() {
+		fmt.Println("456")
+	})
+	n.Start()
 }
 func TestDIS4(t *testing.T) {
 	conf := make([]spruce.DCSConfig, 2)
