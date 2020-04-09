@@ -202,7 +202,7 @@ func client(config Config) {
 func NoRpcServer(config *Config) {
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
-		log.Println(err)
+		log.Println(205, err)
 		return
 	}
 	defer a.Close()
@@ -253,36 +253,13 @@ func EchoNoKeepAlive(c net.Conn, slot *Slot) {
 	}
 	_, err = c.Write(msg)
 	if err != nil {
-		log.Println(err)
+		log.Println(256, err)
 	}
 }
 func (s *Slot) Storage() {
 	balala.Storage()
 }
 
-//func (s *Slot) Get(lang []byte) interface{} {
-//	n := s.getHashPos(lang[11:])
-//	fmt.Println("get value of", n, "slot", string(lang[11:]))
-//	if s.All[n].IP == s.Face.IP {
-//		return balala.Get(lang[11:])
-//	} else {
-//		return getRemote(SendGetMessage(lang[11:]), s.All[n].IP)
-//	}
-//}
-//func (s *Slot) Set(lang []byte) []byte {
-//	key, value := SplitKeyValue(lang[11:])
-//	ns := s.getHashPos(key)
-//	fmt.Println("set value to", s.Face.IP, "slot", string(key))
-//	if s.All[ns].IP == s.Face.IP {
-//		fmt.Println("save")
-//		ti := ParsingExpirationDate(lang[2:4]).(int64)
-//		it := balala.Set(key, value, ti)
-//		return []byte{uint8(it)}
-//	} else {
-//		return getRemote(lang, s.All[ns].IP)
-//	}
-//}
-// to rpc
 func (s *Slot) Get(lang []byte) interface{} {
 	n := s.getHashPos(lang[11:])
 	fmt.Println("get value of", s.All[n].IP, "slot", string(lang[11:]))
@@ -569,7 +546,7 @@ func createMemoryServe(config Config, s *Slot) {
 		tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
 		a, err := net.ListenTCP("tcp", tcpAddr)
 		if err != nil {
-			log.Println(err)
+			log.Println(549, err)
 			return
 		}
 		defer a.Close()
@@ -577,16 +554,15 @@ func createMemoryServe(config Config, s *Slot) {
 		fmt.Println("server is running   =>", os.Getpid())
 		for {
 			c, err := a.AcceptTCP()
-			fmt.Println(123)
 			if err != nil {
-				log.Println(err)
+				log.Println(558, err)
 			}
 			go memoryServeHandle(c, s)
 		}
 	}
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
-		log.Println(err)
+		log.Println(566, err)
 		return
 	}
 	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
@@ -604,12 +580,11 @@ func createMemoryServe(config Config, s *Slot) {
 }
 func memoryServeHandleConn(c net.Conn) {
 	defer c.Close()
-	data := make([]byte, 512)
+	data := make([]byte, 2048)
 	n, err := c.Read(data)
 	//log.Println("get bytes", data[:n], n)
-	if err != nil || n < 11 {
-		log.Println(err)
-		c.Close()
+	if n < 11 {
+		log.Println(588, err)
 		return
 	}
 	msg := make([]byte, 0)
@@ -626,6 +601,7 @@ func memoryServeHandleConn(c net.Conn) {
 			msg = m.([]byte)
 		}
 	case 3:
+		msg = CreateUUID(int(data[1]), data[11:n], CreateNewId(4))
 	}
 	_, err = c.Write(msg)
 	if err != nil {
@@ -637,7 +613,7 @@ func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 	n, err := c.Read(data)
 	//log.Println("get bytes", string(data[:n]), n)
 	if err != nil {
-		log.Println(err)
+		log.Println(618, err)
 	} else {
 		err = c.CloseRead()
 	}

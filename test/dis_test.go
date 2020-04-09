@@ -3,19 +3,54 @@ package test
 import (
 	"../../spruce"
 	"fmt"
+	"golang.org/x/net/webdav"
 	"net/http"
 	"testing"
 )
 
-func TestDIS2(t *testing.T) {
-	spruce.StartSpruceDistributed(spruce.Config{
-		ConfigType:    spruce.FILE,
-		DCSConfigFile: "./config.yml",
-		Addr:          "127.0.0.1:9102",
-		KeepAlive:     false,
-		IsBackup:      false,
-		NowIP:         "192.168.0.102:9102",
+type User struct {
+	Name string
+	Pass string
+}
+
+var checkUser [2]User
+
+func init() {
+	checkUser[0] = User{
+		Name: "abcd",
+		Pass: "1121",
+	}
+	checkUser[1] = User{
+		Name: "feng",
+		Pass: "1121331",
+	}
+}
+func TestTE2(t *testing.T) {
+	fs := &webdav.Handler{
+		FileSystem: webdav.Dir("D:\\phpstudy_pro\\WWW\\laravel"),
+		LockSystem: webdav.NewMemLS(),
+	}
+	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		username, password, ok := req.BasicAuth()
+		if !ok {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		var p bool
+		for _, v := range checkUser {
+			if v.Name != username && v.Pass != password {
+				continue
+			}
+			p = true
+		}
+		if !p {
+			http.Error(w, "WebDAV: need authorized!", http.StatusUnauthorized)
+			return
+		}
+		fs.ServeHTTP(w, req)
 	})
+	http.ListenAndServe(":4444", nil)
 }
 func TestBack(t *testing.T) {
 
@@ -51,6 +86,10 @@ func TestDIS3(t *testing.T) {
 		KeepAlive:     false,
 		IsBackup:      false,
 	})
+}
+func TestUUID(t *testing.T) {
+	d := []int{0, 1, 2, 3, 4, 5, 6}
+	fmt.Println(d[:3])
 }
 func TestClock(t *testing.T) {
 	n := spruce.NewClockTask(2)

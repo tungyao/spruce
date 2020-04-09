@@ -1,7 +1,10 @@
 package spruce
 
 import (
+	"fmt"
+	"math/rand"
 	"reflect"
+	"time"
 )
 
 func CheckConfig(nw interface{}, deft interface{}) {
@@ -141,4 +144,31 @@ func Equal(one []byte, two []byte) bool {
 		}
 	}
 	return true
+}
+func CreateUUID(length int, xtr []byte, self []byte) []byte {
+	str := fmt.Sprintf("%x", xtr)
+	strLow := ComplementHex(str[:(len(str)-1)/3], (length-20)*2/3)
+	strMid := ComplementHex(str[(len(str)-1)/3:(len(str)-1)*2/3], (length-20)/3)
+	<-time.After(1 * time.Nanosecond)
+	ti := time.Now().UnixNano()
+	return []byte(ComplementHex(fmt.Sprintf("%s%x%s%s", strLow, ti, strMid, self), length))
+}
+func ComplementHex(s string, x int) string {
+	if len(s) == x {
+		return s
+	} else if len(s) < x {
+		s += string(CreateNewId(x - len(s)))
+	} else if len(s) > x {
+		return s[:x]
+	}
+	return s
+}
+func CreateNewId(length int) []byte {
+	d := "abcdef012345689"
+	da := make([]byte, length)
+	for i := 0; i < length; i++ {
+		<-time.After(time.Nanosecond * 1)
+		da[i] = d[rand.New(rand.NewSource(time.Now().UnixNano())).Intn(15)]
+	}
+	return da
 }
