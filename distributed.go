@@ -626,6 +626,7 @@ func memoryServeHandleConn(c net.Conn) {
 			msg = m.([]byte)
 		}
 	case 3:
+		msg = CreateUUID(int(data[1]), data[11:n], CreateNewId(4))
 	}
 	_, err = c.Write(msg)
 	if err != nil {
