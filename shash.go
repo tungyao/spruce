@@ -72,6 +72,9 @@ func find(key []byte, node *node) interface{} {
 		tmp.check = false
 		return nil
 	}
+	if tmp.check == false {
+		return nil
+	}
 	return tmp.value
 }
 func newNode(k, v []byte, deep int, exptime int64) *node {
@@ -153,12 +156,7 @@ func (h *Hash) Load() {
 	h.rw.RLock()
 	defer h.rw.RUnlock()
 }
-func (h *Hash) Delete(key []byte) []byte {
-	pos := h.GetHashPos(key)
-	n, v := delete(key, h.ver[pos])
-	h.ver[pos] = n
-	return v
-}
+
 func (h *Hash) hashString(str []byte, hashcode uint) uint {
 	var (
 		key        = str
@@ -188,24 +186,24 @@ func (h *Hash) GetHashPos(str []byte) uint {
 func (h *Hash) Clone() int {
 	return h.clone
 }
-
+func (h *Hash) Delete(key []byte) []byte {
+	pos := h.GetHashPos(key)
+	h.rw.RLock()
+	_, v := delete(key, h.ver[pos])
+	h.rw.RUnlock()
+	//h.ver[pos] = n
+	return v
+}
 func delete(key []byte, nod *node) (*node, []byte) {
-	if nod == nil {
-		return nod, nil
-	}
-	p1 := nod
-	p2 := nod.next
-	for p2 != nil {
-		if Equal(p2.key, key) {
-			p1.next = p2.next
-			p2 = &node{}
-			//return p1, v
-		} else {
-			p1 = p2
+	for nod != nil {
+		p1 := nod.next
+		if Equal(nod.key, key) {
+			nod.check = false
+			return nod, nil
 		}
-		p2 = p1.next
+		nod = p1.next
 	}
-	return p1, nil
+	return nod, nil
 }
 func FindAll(n []*node) []byte {
 	tmp := n

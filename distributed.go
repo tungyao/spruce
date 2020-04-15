@@ -303,6 +303,23 @@ func GetRpc(args *OperationArgs, address string) interface{} {
 	client.Close()
 	return result
 }
+func DeleteRpc(args *OperationArgs, address string) []byte {
+	//defer func() {
+	//	x := recover()
+	//	log.Panicln(x)
+	//}()
+	client, err := rpc.DialHTTP("tcp", address)
+	if err != nil {
+		log.Panicln(err)
+	}
+	var result []byte
+	err = client.Call("Operation.Delete", args, &result)
+	if err != nil {
+		log.Panicln(err)
+	}
+	client.Close()
+	return result
+}
 func SetRpc(args *OperationArgs, address string) int {
 	//defer func() {
 	//	x := recover()
@@ -343,7 +360,7 @@ func (s *Slot) Delete(lang []byte) []byte {
 	if s.All[ns].IP == s.Face.IP {
 		return balala.Delete(key)
 	} else {
-		return getRemote(lang, s.All[ns].IP)
+		return DeleteRpc(&OperationArgs{Key: lang[11:]}, s.All[ns].IP)
 	}
 }
 func GetData(a net.Conn) []byte {

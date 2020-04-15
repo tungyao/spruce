@@ -27,7 +27,7 @@ func init() {
 }
 func TestTE2(t *testing.T) {
 	fs := &webdav.Handler{
-		FileSystem: webdav.Dir("D:\\phpstudy_pro\\WWW\\laravel"),
+		FileSystem: webdav.Dir("D:\\phpstudy_pro\\WWW\\auth"),
 		LockSystem: webdav.NewMemLS(),
 	}
 	http.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {

@@ -8,6 +8,9 @@ import (
 	"testing"
 )
 
+func TestName(t *testing.T) {
+	fmt.Println(ParsingExpirationDate(3600).([]byte))
+}
 func BenchmarkRun(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Method()
@@ -20,12 +23,12 @@ func TestRun(t *testing.T) {
 }
 func Method() {
 	var wg sync.WaitGroup
-	var allc =make(chan int,2000)
+	var allc = make(chan int, 2000)
 	for i := 0; i < 5000; i++ {
 		wg.Add(1)
 		go func() {
 			c, err := net.Dial("tcp", "127.0.0.1:81")
-			allc<-i
+			allc <- i
 			if err != nil {
 				log.Panicln(err)
 			}
