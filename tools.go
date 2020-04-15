@@ -156,9 +156,11 @@ func CreateUUID(length int, xtr []byte, self []byte) []byte {
 func ComplementHex(s string, x int) string {
 	if len(s) == x {
 		return s
-	} else if len(s) < x {
+	}else
+	if len(s) < x {
 		s += string(CreateNewId(x - len(s)))
-	} else if len(s) > x {
+	}else
+	if len(s) > x {
 		return s[:x]
 	}
 	return s
