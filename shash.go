@@ -137,6 +137,10 @@ func (h *Hash) Set(key []byte, value interface{}, expTime int64) int {
 }
 func (h *Hash) Get(key []byte) interface{} {
 	pos := h.GetHashPos(key)
+	if Equal(key, []byte("all")) {
+		return FindAll(h.ver)
+	}
+
 	return find(key, h.ver[pos])
 }
 func (h *Hash) Storage() {
@@ -207,19 +211,18 @@ func delete(key []byte, nod *node) (*node, []byte) {
 }
 func FindAll(n []*node) []byte {
 	tmp := n
-	data := make([]byte, 0)
+	data := ""
 	for _, v := range tmp {
 		t := v
 		for t != nil {
 			if len(t.key) != 0 {
 				//x := make([]byte, 0)
-				data = append(data)
-				//fmt.Println(string(t.key), string(t.value))
+				data += string(t.key) + "\t\t" + fmt.Sprintf("%s", t.value) + "\n"
 			}
 			t = t.next
 		}
 	}
-	return nil
+	return []byte(data)
 }
 
 // set all thing to bytes

@@ -11,11 +11,12 @@ import (
 )
 
 type Ring struct {
-	Now      []*Msg
+	Now      *Msg
 	Dead     []*Msg `用来存放没有成功推送出去的消息,消息都会立即推送出去，没推出去下方在Dead`
 	All      int    `当前所有的消息数`
 	mux      sync.RWMutex
 	register chan *Msg
+	head     chan *Msg
 	execute  chan *Msg
 }
 type Msg struct {
@@ -25,38 +26,63 @@ type Msg struct {
 	Content string
 	Repeat  int
 	Loop    int
+	Next    *Msg
 }
 
 // TODO Message
 // 要 new 出一个环形的msg
 func NewMessage() *Ring {
 	return &Ring{
-		Now:      make([]*Msg, 0),
+		Now:      nil,
 		Dead:     make([]*Msg, 0),
 		register: make(chan *Msg, 3000),
 		execute:  make(chan *Msg, 3000),
+		head:     make(chan *Msg, 3000),
 	}
 }
 func (r *Ring) loop() {
-	for {
+	go func() { // 检测到入队后 直接把队列头部的取出来
+		for {
+			select {
+			case <-r.head:
+				//r.mux.RLock()
+				//r.execute <- r.Now
+				fmt.Println("head", r.Now)
+				//r.Now = r.Now.Next
+				//r.mux.RUnlock()
+			}
+		}
+	}()
+
+	for { // 检测入队
 		select {
 		case m := <-r.register:
-			fmt.Println(m)
-			r.Now = append(r.Now, m)
+			r.mux.RLock()
+			if r.Now == nil {
+				r.Now = m
+				continue
+			}
+			p1 := r.Now
+			p2 := r.Now.Next
+			for p2 != nil {
+				p1 = p2
+				p2 = p1.Next
+			}
+			fmt.Println(p2)
+			p2 = m
+			r.mux.RUnlock()
 			r.All++
-			// r.execute <- m
-		case m := <-r.execute:
-			fmt.Println(m)
-		default:
-
+			r.head <- m //放入执行队列
 		}
 	}
 }
 
+var RING *Ring
+
 func Run() {
-	r := NewMessage()
-	go r.loop()
-	rpc.Register(r) // 注册rpc服务
+	RING := NewMessage()
+	go RING.loop()
+	_ = rpc.Register(RING) // 注册rpc服务
 	lis, err := net.Listen("tcp", ":89")
 	if err != nil {
 		log.Fatalln("fatal error: ", err)
@@ -78,6 +104,15 @@ func (r *Ring) Push(msg *Msg, res *string) error {
 	return nil
 }
 func (r *Ring) Pull(msg *Msg, res *string) error {
+	x, ok := <-r.execute
+	if ok {
+		*res = x.Content
+	} else {
+		r.mux.RLock()
+		r.Dead = append(r.Dead, x)
+		r.mux.RUnlock()
+		*res = "get error"
+	}
 	return nil
 
 }
