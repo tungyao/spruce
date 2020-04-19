@@ -6,12 +6,6 @@ import (
 	"log"
 	"net"
 	"sync"
-	"testing"
-)
-
-var (
-	addr string
-	keep bool
 )
 
 func init() {

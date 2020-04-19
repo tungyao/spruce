@@ -6,6 +6,8 @@ import (
 	"net"
 	"sync"
 	"testing"
+
+	"../../spruce"
 )
 
 func TestName(t *testing.T) {
@@ -17,7 +19,7 @@ func BenchmarkRun(b *testing.B) {
 	}
 }
 func TestRun(t *testing.T) {
-	for i := 0; i < 1; i++ { //use b.N for looping
+	for i := 0; i < 1; i++ { // use b.N for looping
 		Method()
 	}
 }
@@ -33,13 +35,13 @@ func Method() {
 				log.Panicln(err)
 			}
 			_, _ = c.Write(EntrySet("a", "a", 0))
-			//_, _ = c.Write(EntryGet(key))
+			// _, _ = c.Write(EntryGet(key))
 			data := make([]byte, 1024)
 			_, err = c.Read(data)
 			if err != nil {
 				log.Println(err)
 			}
-			//fmt.Println(string(data[:n]))
+			// fmt.Println(string(data[:n]))
 			_ = c.Close()
 			wg.Add(-1)
 		}()
@@ -51,20 +53,25 @@ func Method() {
 			if err != nil {
 				log.Panicln(err)
 			}
-			//_, _ = c.Write(EntrySet("a", "a", 0))
+			// _, _ = c.Write(EntrySet("a", "a", 0))
 			_, _ = c.Write(EntryGet("a"))
 			data := make([]byte, 1024)
 			_, err = c.Read(data)
 			if err != nil {
 				log.Println(err)
 			}
-			//fmt.Println(string(data[:n]))
+			// fmt.Println(string(data[:n]))
 			_ = c.Close()
 			wg.Add(-1)
 		}()
 	}
 	wg.Wait()
 }
+
+func TestClient(t *testing.T) {
+	spruce.NewDial()
+}
+
 func ParsingExpirationDate(tm interface{}) interface{} {
 	switch tm.(type) {
 	case []byte:

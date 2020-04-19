@@ -2,7 +2,6 @@ package spruce
 
 import (
 	"fmt"
-	"github.com/tungyao/ymload"
 	"io"
 	"log"
 	"net"
@@ -10,6 +9,8 @@ import (
 	"os"
 	"strconv"
 	"sync"
+
+	"github.com/tungyao/ymload"
 )
 
 const (
@@ -51,7 +52,7 @@ type Slot struct {
 
 var (
 	AllSlot     []DNode
-	slot        *Slot
+	EntrySlot   *Slot
 	balala      = CreateHash(4096)
 	randomMutex = sync.Mutex{}
 	mux         sync.Mutex
@@ -136,21 +137,21 @@ func initDNode(p string) *Slot {
 
 // TODO Client
 func client(config Config) {
-	slot = initDNode(config.DCSConfigFile)
-	slot.Face.IP = config.NowIP
+	EntrySlot = initDNode(config.DCSConfigFile)
+	EntrySlot.Face.IP = config.NowIP
 
 	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
 	fmt.Println("server is running   =>", os.Getpid())
 	// 启动RPC 要判断如果只有一台主机则不能启动RPC
-	if slot.Count <= 1 {
+	if EntrySlot.Count <= 1 {
 		NoRpcServer(&config)
-	} else { //大于一台则只能只用RPC
+	} else { // 大于一台则只能只用RPC
 		RpcStart(config)
 	}
 	// 监听所有的slot
-	//go listenAllSlotAction()
-	////  这里用来区分稳定的长连接
-	//if config.KeepAlive {
+	// go listenAllSlotAction()
+	// //  这里用来区分稳定的长连接
+	// if config.KeepAlive {
 	//	for {
 	//		c, err := a.Accept()
 	//		if err != nil {
@@ -187,16 +188,16 @@ func client(config Config) {
 	//			tcpP.Close()
 	//		}(c)
 	//	}
-	//}
-	//// 应该写嵌入式了
-	//for {
+	// }
+	// // 应该写嵌入式了
+	// for {
 	//	c, err := a.Accept()
 	//	if err != nil {
 	//		log.Println(err)
 	//	}
 	//	connChan <- c
-	//}
-	//}
+	// }
+	// }
 
 }
 func NoRpcServer(config *Config) {
@@ -218,7 +219,7 @@ func NoRpcServer(config *Config) {
 		go func() {
 			for conn := range connChan {
 				connChanSize <- 1
-				EchoNoKeepAlive(conn, slot)
+				EchoNoKeepAlive(conn, EntrySlot)
 				connChanSize <- 1
 			}
 		}()
@@ -232,14 +233,14 @@ func EchoNoKeepAlive(c net.Conn, slot *Slot) {
 	}()
 	data := make([]byte, 1024)
 	n, err := c.Read(data)
-	//str := SplitString(data[:n], []byte("*$"))
+	// str := SplitString(data[:n], []byte("*$"))
 	msg := make([]byte, 0)
 	switch data[0] {
 	case 0:
 		msg = slot.Delete(data[:n])
 	case 1:
 		msg = slot.Set(data[:n])
-		//return SendStatusMessage()
+		// return SendStatusMessage()
 	case 2:
 		getValue := slot.Get(data[:n])
 		if getValue == nil {
@@ -287,10 +288,10 @@ func (s *Slot) Set(lang []byte) []byte {
 	}
 }
 func GetRpc(args *OperationArgs, address string) interface{} {
-	//defer func() {
+	// defer func() {
 	//	x := recover()
 	//	log.Panicln(x)
-	//}()
+	// }()
 	client, err := rpc.DialHTTP("tcp", address)
 	if err != nil {
 		log.Panicln(err)
@@ -304,10 +305,10 @@ func GetRpc(args *OperationArgs, address string) interface{} {
 	return result
 }
 func DeleteRpc(args *OperationArgs, address string) []byte {
-	//defer func() {
+	// defer func() {
 	//	x := recover()
 	//	log.Panicln(x)
-	//}()
+	// }()
 	client, err := rpc.DialHTTP("tcp", address)
 	if err != nil {
 		log.Panicln(err)
@@ -321,10 +322,10 @@ func DeleteRpc(args *OperationArgs, address string) []byte {
 	return result
 }
 func SetRpc(args *OperationArgs, address string) int {
-	//defer func() {
+	// defer func() {
 	//	x := recover()
 	//	log.Panicln(x)
-	//}()
+	// }()
 	client, err := rpc.DialHTTP("tcp", address)
 	if err != nil {
 		log.Panicln("338", err)
@@ -432,21 +433,21 @@ func ParseConfigFile(path string) []DNode {
 		dn = append(dn, ds)
 	}
 	return dn
-	//f, err := os.Open(path)
-	//defer f.Close()
-	//if err != nil {
+	// f, err := os.Open(path)
+	// defer f.Close()
+	// if err != nil {
 	//	log.Println("open config file error", err)
-	//}
-	//stat, _ := f.Stat()
-	//get := make([]byte, stat.Size())
-	//_, err = f.Read(get)
-	//if err != nil {
+	// }
+	// stat, _ := f.Stat()
+	// get := make([]byte, stat.Size())
+	// _, err = f.Read(get)
+	// if err != nil {
 	//	log.Panic(err)
-	//}
-	//isgroup := false
-	//str := make([]byte, 0)
-	//dn := make([]DNode, 0)
-	//for i := 0; i < len(get); i++ {
+	// }
+	// isgroup := false
+	// str := make([]byte, 0)
+	// dn := make([]DNode, 0)
+	// for i := 0; i < len(get); i++ {
 	//	if get[i] == 32 {
 	//		continue
 	//	}
@@ -459,10 +460,10 @@ func ParseConfigFile(path string) []DNode {
 	//	if isgroup && get[i] != 123 {
 	//		str = append(str, get[i])
 	//	}
-	//}
-	//group := SplitString(str, []byte("\n\n"))
-	//// 到这一部可以开始解析数据到出来
-	//for _, v := range group {
+	// }
+	// group := SplitString(str, []byte("\n\n"))
+	// // 到这一部可以开始解析数据到出来
+	// for _, v := range group {
 	//	ds := DNode{}
 	//	column := SplitString(v, []byte("\n"))
 	//	for _, j := range column {
@@ -495,8 +496,8 @@ func ParseConfigFile(path string) []DNode {
 	//		}
 	//	}
 	//	dn = append(dn, ds)
-	//}
-	//return dn
+	// }
+	// return dn
 }
 
 // 增加新的插槽
@@ -546,21 +547,21 @@ func createMemory(config Config) {
 		}
 		fmt.Print(k, "\t", v.Name, "\t", v.Ip, "\t", v.Weigh, "\n")
 	}
-	slot = setAllDNode(d)
-	slot.Face.IP = config.NowIP
+	EntrySlot = setAllDNode(d)
+	EntrySlot.Face.IP = config.NowIP
 	if len(config.DCSConfigs) > 1 {
 		go RpcStart(config)
 	}
-	//if slot.Count <= 1 {
-	createMemoryServe(config, slot)
-	//} else { //大于一台则只能只用RPC
+	// if slot.Count <= 1 {
+	createMemoryServe(config, EntrySlot)
+	// } else { //大于一台则只能只用RPC
 
-	//}
+	// }
 
 }
 func createMemoryServe(config Config, s *Slot) {
 	if config.KeepAlive {
-		tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) //创建 tcpAddr数据
+		tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) // 创建 tcpAddr数据
 		a, err := net.ListenTCP("tcp", tcpAddr)
 		if err != nil {
 			log.Println(549, err)
@@ -599,7 +600,7 @@ func memoryServeHandleConn(c net.Conn) {
 	defer c.Close()
 	data := make([]byte, 2048)
 	n, err := c.Read(data)
-	//log.Println("get bytes", data[:n], n)
+	// log.Println("get bytes", data[:n], n)
 	if n < 11 {
 		log.Println(588, err)
 		return
@@ -607,12 +608,12 @@ func memoryServeHandleConn(c net.Conn) {
 	msg := make([]byte, 0)
 	switch data[0] {
 	case 0:
-		msg = slot.Delete(data[:n])
+		msg = EntrySlot.Delete(data[:n])
 	case 1:
-		msg = slot.Set(data[:n])
-		//return SendStatusMessage()
+		msg = EntrySlot.Set(data[:n])
+		// return SendStatusMessage()
 	case 2:
-		if m := slot.Get(data[:n]); m == nil {
+		if m := EntrySlot.Get(data[:n]); m == nil {
 			msg = []byte{}
 		} else {
 			msg = m.([]byte)
@@ -628,7 +629,7 @@ func memoryServeHandleConn(c net.Conn) {
 func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 	data := make([]byte, 1024)
 	n, err := c.Read(data)
-	//log.Println("get bytes", string(data[:n]), n)
+	// log.Println("get bytes", string(data[:n]), n)
 	if err != nil {
 		log.Println(618, err)
 	} else {
@@ -643,7 +644,7 @@ func memoryServeHandle(c *net.TCPConn, slot *Slot) {
 		msg = slot.Delete(data[:n])
 	case 1:
 		msg = slot.Set(data[:n])
-		//return SendStatusMessage()
+		// return SendStatusMessage()
 	case 2:
 		msg = slot.Get(data[:n]).([]byte)
 	case 3:
