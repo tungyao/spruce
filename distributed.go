@@ -572,10 +572,9 @@ func createMemoryServe(config Config, s *Slot) {
 		for {
 			c, err := a.Accept()
 			if err != nil {
-				c.Close()
 				log.Println(558, err)
 			}
-			go memoryServeHandle(c, s)
+			go memoryServeHandle(c)
 		}
 	}
 	a, err := net.Listen("tcp", config.Addr)
@@ -626,7 +625,7 @@ func memoryServeHandleConn(c net.Conn) {
 		log.Println("628", err)
 	}
 }
-func memoryServeHandle(c net.Conn, slot *Slot) {
+func memoryServeHandle(c net.Conn) {
 	for {
 		data := make([]byte, 2048)
 		n, err := c.Read(data)
@@ -635,7 +634,7 @@ func memoryServeHandle(c net.Conn, slot *Slot) {
 			err = c.Close()
 			break
 		}
-		msg := make([]byte, 0)
+		msg := []byte{0}
 		if n <= 11 {
 			goto end
 		}
@@ -644,10 +643,8 @@ func memoryServeHandle(c net.Conn, slot *Slot) {
 			msg = EntrySlot.Delete(data[:n])
 		case 1:
 			msg = EntrySlot.Set(data[:n])
-			// return SendStatusMessage()
 		case 2:
 			if m := EntrySlot.Get(data[:n]); m == nil {
-				msg = []byte{}
 			} else {
 				msg = m.([]byte)
 			}
