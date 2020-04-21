@@ -14,7 +14,7 @@ var (
 
 func init() {
 	flag.BoolVar(&keep, "keep", false, "keep alive connect")
-	flag.StringVar(&addr, "addr", "127.0.0.1:81", "listen port")
+	flag.StringVar(&addr, "addr", "127.0.0.1:6998", "listen port")
 }
 func main() {
 	p, _ := ap.NewPool(1, "127.0.0.1:6998")

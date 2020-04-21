@@ -1,0 +1,4 @@
+main_server:
+  name: client0
+  ip: 127.0.0.1:6999
+  weight: 1

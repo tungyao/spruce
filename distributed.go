@@ -97,7 +97,7 @@ func New(config Config) *Slot {
 func StartSpruceDistributed(config Config) *Slot {
 	CheckConfig(&config, Config{
 		ConfigType:      FILE,
-		DCSConfigFile:   "./spruce.yml",
+		DCSConfigFile:   "./config.yml",
 		Addr:            ":9102",
 		ConnChanBufSize: 2048,
 		ConnChanMaxSize: 2048,
@@ -201,6 +201,23 @@ func client(config Config) {
 
 }
 func NoRpcServer(config *Config) {
+	if config.KeepAlive {
+		a, err := net.Listen("tcp", config.Addr)
+		if err != nil {
+			log.Println(549, err)
+			return
+		}
+		defer a.Close()
+		fmt.Println("\n\nserver is listening =>", a.Addr().String())
+		fmt.Println("server is running   =>", os.Getpid())
+		for {
+			c, err := a.Accept()
+			if err != nil {
+				log.Println(216, err)
+			}
+			go memoryServeHandle(c)
+		}
+	}
 	a, err := net.Listen("tcp", config.Addr)
 	if err != nil {
 		log.Println(205, err)
