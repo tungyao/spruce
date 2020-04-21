@@ -561,8 +561,7 @@ func createMemory(config Config) {
 }
 func createMemoryServe(config Config, s *Slot) {
 	if config.KeepAlive {
-		tcpAddr, err := net.ResolveTCPAddr("tcp", config.Addr) // 创建 tcpAddr数据
-		a, err := net.ListenTCP("tcp", tcpAddr)
+		a, err := net.Listen("tcp", config.Addr)
 		if err != nil {
 			log.Println(549, err)
 			return
@@ -571,11 +570,11 @@ func createMemoryServe(config Config, s *Slot) {
 		fmt.Println("\n\nserver is listening =>", a.Addr().String())
 		fmt.Println("server is running   =>", os.Getpid())
 		for {
-			c, err := a.AcceptTCP()
+			c, err := a.Accept()
 			if err != nil {
 				log.Println(558, err)
 			}
-			go memoryServeHandle(c, s)
+			go memoryServeHandle(c)
 		}
 	}
 	a, err := net.Listen("tcp", config.Addr)
@@ -626,34 +625,38 @@ func memoryServeHandleConn(c net.Conn) {
 		log.Println("628", err)
 	}
 }
-func memoryServeHandle(c *net.TCPConn, slot *Slot) {
-	data := make([]byte, 1024)
-	n, err := c.Read(data)
-	// log.Println("get bytes", string(data[:n]), n)
-	if err != nil {
-		log.Println(618, err)
-	} else {
-		err = c.CloseRead()
-	}
-	msg := make([]byte, 0)
-	if n <= 11 {
+func memoryServeHandle(c net.Conn) {
+	for {
+		data := make([]byte, 2048)
+		n, err := c.Read(data)
+		if err != nil {
+			fmt.Println(635, err)
+			err = c.Close()
+			break
+		}
+		msg := []byte{0}
+		if n <= 11 {
+			goto end
+		}
+		switch data[0] {
+		case 0:
+			msg = EntrySlot.Delete(data[:n])
+		case 1:
+			msg = EntrySlot.Set(data[:n])
+		case 2:
+			if m := EntrySlot.Get(data[:n]); m == nil {
+			} else {
+				msg = m.([]byte)
+			}
+		case 3:
+		}
 		goto end
+	end:
+		_, err = c.Write(msg)
+		if err != nil {
+			err = c.Close()
+			log.Println("656", err)
+			break
+		}
 	}
-	switch data[0] {
-	case 0:
-		msg = slot.Delete(data[:n])
-	case 1:
-		msg = slot.Set(data[:n])
-		// return SendStatusMessage()
-	case 2:
-		msg = slot.Get(data[:n]).([]byte)
-	case 3:
-	}
-	goto end
-end:
-	_, err = c.Write(msg)
-	if err != nil {
-		log.Println("656", err)
-	}
-	err = c.Close()
 }

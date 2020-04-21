@@ -90,14 +90,13 @@ Restart:
 	for {
 		log.Println("monitor the watcher")
 		for _, v := range wc.T {
-			c, n := v.Get()
+			c := v.Get()
 			if c == nil {
 				log.Println("ready reconnection ......")
 				<-time.After(time.Second * 5)
-				v.Free()
 				goto Restart
 			}
-			client := rpc.NewClient(c)
+			client := rpc.NewClient(c.Conn)
 			var x int8
 			err := client.Call("Watcher.Pong", &WatcherData{}, &x)
 			if err != nil {
@@ -105,7 +104,6 @@ Restart:
 			}
 			log.Println("get ping data =>", x)
 			client.Close()
-			v.Put(n)
 		}
 		<-time.After(time.Second * 2)
 	}

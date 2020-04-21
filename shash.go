@@ -68,7 +68,6 @@ func find(key []byte, node *node) interface{} {
 		break
 	}
 	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
-		//tmp = tmp.next
 		tmp.check = false
 		return nil
 	}
@@ -140,7 +139,6 @@ func (h *Hash) Get(key []byte) interface{} {
 	if Equal(key, []byte("all")) {
 		return FindAll(h.ver)
 	}
-
 	return find(key, h.ver[pos])
 }
 func (h *Hash) Storage() {

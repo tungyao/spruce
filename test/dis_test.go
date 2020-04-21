@@ -68,7 +68,7 @@ func TestDIS3(t *testing.T) {
 	conf := make([]spruce.DCSConfig, 1)
 	conf[0] = spruce.DCSConfig{
 		Name:     "master",
-		Ip:       "127.0.0.1:82",
+		Ip:       "127.0.0.1:6999",
 		Weigh:    2,
 		Password: "",
 	}
@@ -82,9 +82,9 @@ func TestDIS3(t *testing.T) {
 		ConfigType:    spruce.MEMORY,
 		DCSConfigFile: "",
 		DCSConfigs:    conf,
-		Addr:          ":81",
-		NowIP:         "127.0.0.1:82",
-		KeepAlive:     false,
+		Addr:          ":6998",
+		NowIP:         "127.0.0.1:6999",
+		KeepAlive:     true,
 		IsBackup:      false,
 	})
 }
