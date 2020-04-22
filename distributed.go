@@ -82,26 +82,27 @@ func setAllDNode(c []DNode) *Slot {
 	AllSlot = c
 	return &Slot{Count: len(c), Face: c[0], Other: c[1:], All: c, cry: cryptTable}
 }
-func New(config Config) *Slot {
-	CheckConfig(&config, Config{
-		ConfigType:    FILE,
-		DCSConfigFile: "./",
-		Addr:          "0.0.0.0:9102",
-		KeepAlive:     false,
-	})
-	return setAllDNode(ParseConfigFile(config.DCSConfigFile))
 
-}
+//func New(config Config) *Slot {
+//	CheckConfig(&config, Config{
+//		ConfigType:    FILE,
+//		DCSConfigFile: "./",
+//		Addr:          "0.0.0.0:9102",
+//		KeepAlive:     false,
+//	})
+//	return setAllDNode(ParseConfigFile(config.DCSConfigFile))
+//
+//}
 
 // TODO Start
 func StartSpruceDistributed(config Config) *Slot {
-	CheckConfig(&config, Config{
-		ConfigType:      FILE,
-		DCSConfigFile:   "./config.yml",
-		Addr:            ":9102",
-		ConnChanBufSize: 2048,
-		ConnChanMaxSize: 2048,
-	})
+	//CheckConfig(&config, Config{
+	//	ConfigType:      FILE,
+	//	DCSConfigFile:   "./config.yml",
+	//	Addr:            ":6998",
+	//	ConnChanBufSize: 2048,
+	//	ConnChanMaxSize: 2048,
+	//})
 	// region print logo
 	fmt.Print(`
   ___ _ __  _ __ _   _  ___ ___ 
@@ -589,7 +590,7 @@ func createMemoryServe(config Config, s *Slot) {
 		for {
 			c, err := a.Accept()
 			if err != nil {
-				log.Println(558, err)
+				log.Println(576, err)
 			}
 			go memoryServeHandle(c)
 		}

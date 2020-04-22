@@ -22,16 +22,17 @@ func main() {
 		var operation string
 		var key string
 		var value string
+		var expire int = 0
 		fmt.Print(addr + ">> ")
-		_, _ = fmt.Scanln(&operation, &key, &value)
+		_, _ = fmt.Scanln(&operation, &key, &value, &expire)
 		x := p.Get()
 		if value != "" {
-			x.Write(EntrySet(key, value, 0))
+			x.Write(EntrySet(key, value, expire))
 		} else {
 			x.Write(EntryGet(key))
 		}
 		n := x.Read()
-		fmt.Println(n)
+		fmt.Println(string(n))
 	}
 }
 func ParsingExpirationDate(tm interface{}) interface{} {

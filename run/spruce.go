@@ -1,8 +1,6 @@
 package main
 
-import (
-	"../../spruce"
-)
+import "github.com/tungyao/spruce"
 
 func main() {
 	conf := make([]spruce.DCSConfig, 1)
@@ -19,8 +17,9 @@ func main() {
 	//	Password: "",
 	// }
 	spruce.StartSpruceDistributed(spruce.Config{
-		ConfigType:    spruce.FILE,
-		DCSConfigFile: "./config.yml",
+		ConfigType: spruce.FILE,
+		//DCSConfigFile: "/home/spruce/run/config.yml",
+		DCSConfigFile: "/go/src/spruce/run/config.yml",
 		Addr:          "127.0.0.1:6998",
 		KeepAlive:     true,
 		IsBackup:      false,
