@@ -222,6 +222,20 @@ func FindAll(n []*node) []byte {
 	}
 	return []byte(data)
 }
+func (h *Hash) GetAll() []interface{} {
+	tmp := h.ver
+	data := make([]interface{}, 0)
+	for _, v := range tmp {
+		t := v
+		for t != nil {
+			if len(t.key) != 0 && t.check {
+				data = append(data, t.value)
+			}
+			t = t.next
+		}
+	}
+	return data
+}
 
 // set all thing to bytes
 func ToBytes(x interface{}) ([]byte, error) {
