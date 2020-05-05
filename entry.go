@@ -1,9 +1,5 @@
 package spruce
 
-import (
-	"log"
-)
-
 func EntrySet(key, value []byte, ti int) []byte {
 	out := make([]byte, 11)
 	out[0] = 1
@@ -27,7 +23,6 @@ func EntryGet(key []byte) []byte {
 	for _, v := range key {
 		out = append(out, v)
 	}
-	log.Println("send bytes", out)
 	return out
 }
 func EntryHashSet(key, value []byte, ti int) []byte {
@@ -53,6 +48,23 @@ func EntryHashGet(key []byte) []byte {
 	for _, v := range MD5(key) {
 		out = append(out, v)
 	}
-	log.Println("send bytes", out)
+	return out
+}
+func EntryDelete(key []byte) []byte {
+	out := make([]byte, 11)
+	out[0] = 0
+	out[1] = 2
+	for _, v := range key {
+		out = append(out, v)
+	}
+	return out
+}
+func EntryHashDelete(key []byte) []byte {
+	out := make([]byte, 11)
+	out[0] = 0
+	out[1] = 2
+	for _, v := range MD5(key) {
+		out = append(out, v)
+	}
 	return out
 }

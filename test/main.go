@@ -21,7 +21,7 @@ var (
 func init() {
 	flag.StringVar(&use, "use", "file", "help message for flag name")
 	flag.StringVar(&nowip, "nowip", "0.0.0.0", "we would contrast it")
-	flag.StringVar(&path, "path", "./spruce.yml", "config file path ,default current folder")
+	flag.StringVar(&path, "path", "./config.yml", "config file path ,default current folder")
 	flag.BoolVar(&create, "create", false, "create new config file")
 	flag.BoolVar(&start, "start", false, "start gate-way")
 	flag.BoolVar(&stop, "stop", false, "stop gate-way")
@@ -47,7 +47,7 @@ func main() {
 
 	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.FILE,
-		DCSConfigFile: "./spruce.yml",
+		DCSConfigFile: "./config.yml",
 		Addr:          addr,
 		NowIP:         nowip,
 		KeepAlive:     keep,
