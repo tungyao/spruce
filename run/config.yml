@@ -1,4 +1,9 @@
-main_server:
-  name: client0
-  ip: 127.0.0.1:6999
-  weight: 1
+config:
+  - main_server:
+      name: client0
+      ip: 127.0.0.1:6999
+      weight: 1
+  - two_server:
+      name: client1
+      ip: 127.0.0.2:6999
+      weight: 3
