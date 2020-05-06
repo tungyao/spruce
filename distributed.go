@@ -21,7 +21,7 @@ const (
 type Config struct {
 	ConfigType      int     `配置方式`
 	DCSConfigFile   string  `分布式的配置文件路径`
-	DCSConfigs      []DNode `采用内存的方式部署`
+	DNode           []DNode `采用内存的方式部署`
 	Addr            string  `跑在哪个端口上`
 	NowIP           string  `当前服务器运行的IP地址 暂时必须`
 	KeepAlive       bool
@@ -144,7 +144,7 @@ func initDNode(p string) *Slot {
 func client(config Config) {
 	EntrySlot = initDNode(config.DCSConfigFile)
 	EntrySlot.Face.Ip = config.NowIP
-
+	config.DNode = EntrySlot.All
 	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
 	fmt.Println("server is running   =>", os.Getpid())
 	// 启动RPC 要判断如果只有一台主机则不能启动RPC
@@ -579,12 +579,12 @@ func listenAllSlotAction() {
 func createMemory(config Config) {
 	fmt.Print("\n\nrunning server\n")
 	fmt.Print("id", "\t", "name", "\t", "ip", "\t", "weigh", "\n")
-	for k, v := range config.DCSConfigs {
+	for k, v := range config.DNode {
 		fmt.Print(k, "\t", v.Name, "\t", v.Ip, "\t", v.Weigh, "\n")
 	}
-	EntrySlot = setAllDNode(config.DCSConfigs)
+	EntrySlot = setAllDNode(config.DNode)
 	EntrySlot.Face.Ip = config.NowIP
-	if len(config.DCSConfigs) > 1 {
+	if len(config.DNode) > 1 {
 		go RpcStart(config)
 	}
 	// if slot.Count <= 1 {
