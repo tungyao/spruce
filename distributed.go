@@ -2,15 +2,15 @@ package spruce
 
 import (
 	"fmt"
+	"github.com/ghodss/yaml"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/rpc"
 	"os"
 	"strconv"
 	"sync"
-
-	"github.com/tungyao/ymload"
 )
 
 const (
@@ -29,11 +29,14 @@ type Config struct {
 	ConnChanBufSize int  `连接信道缓冲区大小`
 	ConnChanMaxSize int  `最大连接数`
 }
+type FileConfig struct {
+	Config []*DCSConfig `json:"config"`
+}
 type DCSConfig struct {
-	Name     string
-	Ip       string
-	Weigh    int
-	Password string
+	Name     string `json:"name"`
+	Ip       string `json:"ip"`
+	Weigh    int    `json:"weigh"`
+	Password string `json:"password"`
 }
 type DNode struct {
 	Name  string
@@ -430,27 +433,48 @@ func (s *Slot) getHashPos(str []byte) uint {
 	return nHashPos
 }
 func ParseConfigFile(path string) []DNode {
-	fmt.Println(path)
-	yml := ymload.Format(path)
+	//fmt.Println(path)
+	//yml := ymload.Format(path)
+	var config FileConfig
+	fs, err := os.Open(path)
+	if err != nil {
+		log.Panicln(err)
+	}
+	b, _ := ioutil.ReadAll(fs)
+	err = yaml.Unmarshal(b, &config)
+	if err != nil {
+		log.Panicln(err)
+	}
+	fmt.Println(config)
 	dn := make([]DNode, 0)
-	for _, v := range yml {
+	for _, v := range config.Config {
 		ds := DNode{}
-		if v["ip"] != nil {
-			ds.IP = v["ip"].(string)
-		}
-		if v["name"] != nil {
-			ds.Name = v["name"].(string)
-		}
-		if v["weight"] != nil {
-			i, _ := strconv.Atoi(v["weight"].(string))
-			ds.Weigh = i
-		}
-		if v["password"] != nil {
-			ds.Pwd = v["password"].(string)
-		}
+		ds.IP = v.Ip
+		ds.Name = v.Name
+		ds.Weigh = v.Weigh
+		ds.Pwd = v.Password
 		dn = append(dn, ds)
 	}
 	return dn
+	//dn := make([]DNode, 0)
+	//for _, v := range yml {
+	//	ds := DNode{}
+	//	if v["ip"] != nil {
+	//		ds.IP = v["ip"].(string)
+	//	}
+	//	if v["name"] != nil {
+	//		ds.Name = v["name"].(string)
+	//	}
+	//	if v["weight"] != nil {
+	//		i, _ := strconv.Atoi(v["weight"].(string))
+	//		ds.Weigh = i
+	//	}
+	//	if v["password"] != nil {
+	//		ds.Pwd = v["password"].(string)
+	//	}
+	//	dn = append(dn, ds)
+	//}
+	//return dn
 	// f, err := os.Open(path)
 	// defer f.Close()
 	// if err != nil {
