@@ -110,7 +110,7 @@ Restart:
 }
 func RpcStart(address Config) {
 	newDCS := make([]DNode, 0)
-	for _, v := range address.DCSConfigs {
+	for _, v := range address.DNode {
 		if v.Ip != address.NowIP {
 			newDCS = append(newDCS, v)
 		}
