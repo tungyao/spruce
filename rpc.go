@@ -2,7 +2,6 @@ package spruce
 
 import (
 	"fmt"
-	awesome "git.yaop.ink/tungyao/awesome-pool"
 	"log"
 	"net"
 	"net/rpc"
@@ -38,7 +37,6 @@ func (o *Operation) Set(args *OperationArgs, result *int) error {
 }
 
 type Watcher struct {
-	T []*awesome.Pool
 }
 type WatcherData struct {
 	Time int64
@@ -62,7 +60,7 @@ func (w *Watcher) Dead(args *WatcherData, result *int8) error {
 	*result = x
 	return nil
 }
-func startWatcher(dsc *[]DNode) {
+func startWatcher(dsc Config) {
 	log.Println("starting rpc watcher ...")
 	log.Print(`
 __     __     ______     ______   ______     __  __     ______     ______
@@ -72,60 +70,36 @@ __     __     ______     ______   ______     __  __     ______     ______
  \/_/   \/_/   \/_/\/_/     \/_/   \/_____/   \/_/\/_/   \/_____/   \/_/ /_/
 
 `)
-	wc := new(Watcher)
-	wc.T = make([]*awesome.Pool, len(*dsc))
-	goto Restart
-Restart:
-	var errx error
-	for k, v := range *dsc {
-		log.Println("ping address =>", v.Ip)
-		wc.T[k], errx = awesome.NewPool(10, v.Ip)
-		if errx != nil {
-			log.Println("ready reconnection ......")
-			<-time.After(time.Second * 5)
-			goto Restart
+	for _, v := range dsc.DNode {
+		if v.Ip == dsc.NowIP {
+			continue
 		}
-	}
-
-	for {
-		log.Println("monitor the watcher")
-		for _, v := range wc.T {
-			c := v.Get()
-			if c == nil {
-				log.Println("ready reconnection ......")
-				<-time.After(time.Second * 5)
-				goto Restart
-			}
-			client := rpc.NewClient(c.Conn)
-			var x int8
-			err := client.Call("Watcher.Pong", &WatcherData{}, &x)
-			if err != nil {
-				log.Println(err)
-			}
-			log.Println("get ping data =>", x)
-			client.Close()
+		c, err := rpc.Dial("tcp", v.Ip)
+		for err != nil {
+			c, err = rpc.Dial("tcp", v.Ip)
+			<-time.After(time.Second * 2)
 		}
-		<-time.After(time.Second * 2)
+		var x int8
+		err = c.Call("Watcher.Pong", &WatcherData{}, &x)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println("get ping data =>", x)
+		c.Close()
 	}
 }
-func RpcStart(address Config) {
-	newDCS := make([]DNode, 0)
-	for _, v := range address.DNode {
-		if v.Ip != address.NowIP {
-			newDCS = append(newDCS, v)
-		}
-	}
+func RpcStart(config Config) {
 	err := rpc.Register(new(Operation))
 	err = rpc.Register(new(Watcher))
 	if err != nil {
 		log.Panicln(err)
 	}
-	listen, err := net.Listen("tcp", ":82")
+	listen, err := net.Listen("tcp", ":6999")
 	if err != nil {
 		log.Panicln(err)
 	}
 	fmt.Println("\n\nRPC is listening =>", listen.Addr().String())
-	go startWatcher(&newDCS)
+	go startWatcher(config)
 	//rpc.NewServer()
 	rpc.Accept(listen)
 }

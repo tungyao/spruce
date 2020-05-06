@@ -148,9 +148,8 @@ func client(config Config) {
 	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
 	fmt.Println("server is running   =>", os.Getpid())
 	// 启动RPC 要判断如果只有一台主机则不能启动RPC
-	if EntrySlot.Count <= 1 {
-		NoRpcServer(&config)
-	} else { // 大于一台则只能只用RPC
+	go NoRpcServer(&config)
+	if EntrySlot.Count > 1 {
 		RpcStart(config)
 	}
 	// 监听所有的slot
@@ -314,7 +313,7 @@ func GetRpc(args *OperationArgs, address string) interface{} {
 	//	x := recover()
 	//	log.Panicln(x)
 	// }()
-	client, err := rpc.DialHTTP("tcp", address)
+	client, err := rpc.Dial("tcp", address)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -331,7 +330,7 @@ func DeleteRpc(args *OperationArgs, address string) []byte {
 	//	x := recover()
 	//	log.Panicln(x)
 	// }()
-	client, err := rpc.DialHTTP("tcp", address)
+	client, err := rpc.Dial("tcp", address)
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -348,7 +347,7 @@ func SetRpc(args *OperationArgs, address string) int {
 	//	x := recover()
 	//	log.Panicln(x)
 	// }()
-	client, err := rpc.DialHTTP("tcp", address)
+	client, err := rpc.Dial("tcp", address)
 	if err != nil {
 		log.Panicln("338", err)
 	}
