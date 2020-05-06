@@ -62,7 +62,7 @@ func (w *Watcher) Dead(args *WatcherData, result *int8) error {
 	*result = x
 	return nil
 }
-func startWatcher(dsc *[]DCSConfig) {
+func startWatcher(dsc *[]DNode) {
 	log.Println("starting rpc watcher ...")
 	log.Print(`
 __     __     ______     ______   ______     __  __     ______     ______
@@ -109,7 +109,7 @@ Restart:
 	}
 }
 func RpcStart(address Config) {
-	newDCS := make([]DCSConfig, 0)
+	newDCS := make([]DNode, 0)
 	for _, v := range address.DCSConfigs {
 		if v.Ip != address.NowIP {
 			newDCS = append(newDCS, v)

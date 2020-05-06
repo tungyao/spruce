@@ -68,7 +68,7 @@ func remoteStoregeFile() {
 	oAll := AllSlot
 	// 饭后依次遍历 ，让其他电脑也同时备份
 	for _, v := range oAll {
-		go getRemote([]byte("*"), v.IP)
+		go getRemote([]byte("*"), v.Ip)
 	}
 	// 如果不出错，那么其他掉也会同时保存
 }

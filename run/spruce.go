@@ -3,8 +3,8 @@ package main
 import "../../spruce"
 
 func main() {
-	conf := make([]spruce.DCSConfig, 1)
-	conf[0] = spruce.DCSConfig{
+	conf := make([]spruce.DNode, 1)
+	conf[0] = spruce.DNode{
 		Name:     "master",
 		Ip:       "127.0.0.1:6999",
 		Weigh:    2,

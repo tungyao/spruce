@@ -2,7 +2,7 @@ package spruce
 
 import (
 	"fmt"
-	"github.com/ghodss/yaml"
+	"github.com/go-yaml/yaml"
 	"io"
 	"io/ioutil"
 	"log"
@@ -19,30 +19,31 @@ const (
 )
 
 type Config struct {
-	ConfigType      int         `配置方式`
-	DCSConfigFile   string      `分布式的配置文件路径`
-	DCSConfigs      []DCSConfig `采用内存的方式部署`
-	Addr            string      `跑在哪个端口上`
-	NowIP           string      `当前服务器运行的IP地址 暂时必须`
+	ConfigType      int     `配置方式`
+	DCSConfigFile   string  `分布式的配置文件路径`
+	DCSConfigs      []DNode `采用内存的方式部署`
+	Addr            string  `跑在哪个端口上`
+	NowIP           string  `当前服务器运行的IP地址 暂时必须`
 	KeepAlive       bool
 	IsBackup        bool `自动备份`
 	ConnChanBufSize int  `连接信道缓冲区大小`
 	ConnChanMaxSize int  `最大连接数`
 }
 type FileConfig struct {
-	Config []*DCSConfig `json:"config"`
+	Config []DNode `yaml:"config"`
 }
-type DCSConfig struct {
-	Name     string `json:"name"`
-	Ip       string `json:"ip"`
-	Weigh    int    `json:"weigh"`
-	Password string `json:"password"`
-}
+
+//type DCSConfig struct {
+//	Name     string `json:"name"`
+//	Ip       string `json:"ip"`
+//	Weigh    int    `json:"weigh"`
+//	Password string `json:"password"`
+//}
 type DNode struct {
-	Name  string
-	IP    string
-	Weigh int
-	Pwd   string
+	Name     string `yaml:"name"`
+	Ip       string `yaml:"ip"`
+	Weigh    int    `yaml:"weigh"`
+	Password string `yaml:"password"`
 }
 type Slot struct {
 	Count int
@@ -134,7 +135,7 @@ func initDNode(p string) *Slot {
 	fmt.Print("\n\nrunning server\n")
 	fmt.Print("id", "\t", "name", "\t", "ip", "\t", "weigh", "\n")
 	for k, v := range d {
-		fmt.Print(k, "\t", v.Name, "\t", v.IP, "\t", v.Weigh, "\n")
+		fmt.Print(k, "\t", v.Name, "\t", v.Ip, "\t", v.Weigh, "\n")
 	}
 	return setAllDNode(d)
 }
@@ -142,7 +143,7 @@ func initDNode(p string) *Slot {
 // TODO Client
 func client(config Config) {
 	EntrySlot = initDNode(config.DCSConfigFile)
-	EntrySlot.Face.IP = config.NowIP
+	EntrySlot.Face.Ip = config.NowIP
 
 	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
 	fmt.Println("server is running   =>", os.Getpid())
@@ -284,19 +285,19 @@ func (s *Slot) Storage() {
 
 func (s *Slot) Get(lang []byte) interface{} {
 	n := s.getHashPos(lang[11:])
-	fmt.Println("get value of", s.All[n].IP, "slot", string(lang[11:]))
-	if s.All[n].IP == s.Face.IP {
+	fmt.Println("get value of", s.All[n].Ip, "slot", string(lang[11:]))
+	if s.All[n].Ip == s.Face.Ip {
 		return balala.Get(lang[11:])
 	} else {
-		return GetRpc(&OperationArgs{Key: lang[11:]}, s.All[n].IP)
+		return GetRpc(&OperationArgs{Key: lang[11:]}, s.All[n].Ip)
 	}
 }
 func (s *Slot) Set(lang []byte) []byte {
 	key, value := SplitKeyValue(lang[11:])
 	ns := s.getHashPos(key)
-	fmt.Println("set value to", s.All[ns].IP, "slot", string(key))
+	fmt.Println("set value to", s.All[ns].Ip, "slot", string(key))
 	ti := ParsingExpirationDate(lang[2:4]).(int64)
-	if s.All[ns].IP == s.Face.IP {
+	if s.All[ns].Ip == s.Face.Ip {
 		it := balala.Set(key, value, ti)
 		fmt.Println("saved", it)
 		return []byte(strconv.Itoa(it))
@@ -305,7 +306,7 @@ func (s *Slot) Set(lang []byte) []byte {
 			Key:        key,
 			Value:      value,
 			Expiration: ti,
-		}, s.All[ns].IP))}
+		}, s.All[ns].Ip))}
 	}
 }
 func GetRpc(args *OperationArgs, address string) interface{} {
@@ -378,11 +379,11 @@ func (s *Slot) Delete(lang []byte) []byte {
 		return nil
 	}
 	ns := s.getHashPos(key)
-	fmt.Println("delete value of", s.Face.IP, "slot", string(key))
-	if s.All[ns].IP == s.Face.IP {
+	fmt.Println("delete value of", s.Face.Ip, "slot", string(key))
+	if s.All[ns].Ip == s.Face.Ip {
 		return balala.Delete(key)
 	} else {
-		return DeleteRpc(&OperationArgs{Key: lang[11:]}, s.All[ns].IP)
+		return DeleteRpc(&OperationArgs{Key: lang[11:]}, s.All[ns].Ip)
 	}
 }
 func GetData(a net.Conn) []byte {
@@ -445,22 +446,21 @@ func ParseConfigFile(path string) []DNode {
 	if err != nil {
 		log.Panicln(err)
 	}
-	fmt.Println(config)
-	dn := make([]DNode, 0)
-	for _, v := range config.Config {
-		ds := DNode{}
-		ds.IP = v.Ip
-		ds.Name = v.Name
-		ds.Weigh = v.Weigh
-		ds.Pwd = v.Password
-		dn = append(dn, ds)
-	}
-	return dn
+	//dn := make([]DNode, 0)
+	//for _, v := range config.Config {
+	//	ds := DNode{}
+	//	ds.Ip = v.Ip
+	//	ds.Name = v.Name
+	//	ds.Weigh = v.Weigh
+	//	ds.Pwd = v.Password
+	//	dn = append(dn, ds)
+	//}
+	return config.Config
 	//dn := make([]DNode, 0)
 	//for _, v := range yml {
 	//	ds := DNode{}
 	//	if v["ip"] != nil {
-	//		ds.IP = v["ip"].(string)
+	//		ds.Ip = v["ip"].(string)
 	//	}
 	//	if v["name"] != nil {
 	//		ds.Name = v["name"].(string)
@@ -515,7 +515,7 @@ func ParseConfigFile(path string) []DNode {
 	//		}
 	//		ip := FindString(j, []byte("ip="))
 	//		if ip != nil {
-	//			ds.IP = string(ip.([]uint8))
+	//			ds.Ip = string(ip.([]uint8))
 	//		}
 	//		password := FindString(j, []byte("password="))
 	//		if password != nil {
@@ -560,7 +560,7 @@ func (s *Slot) ResetSlot(n DNode) {
 	s.Mux.Lock()
 	alls := s.All
 	for _, v := range alls {
-		getRemote([]byte("reset*$"+n.Name+"*$"+n.IP+"*$"+strconv.Itoa(n.Weigh)+"*$"+n.Pwd), v.IP)
+		getRemote([]byte("reset*$"+n.Name+"*$"+n.Ip+"*$"+strconv.Itoa(n.Weigh)+"*$"+n.Password), v.Ip)
 	}
 	s.Mux.Unlock()
 }
@@ -577,20 +577,13 @@ func listenAllSlotAction() {
 
 // memory control 通过嵌入式来配置spruce
 func createMemory(config Config) {
-	d := make([]DNode, len(config.DCSConfigs))
 	fmt.Print("\n\nrunning server\n")
 	fmt.Print("id", "\t", "name", "\t", "ip", "\t", "weigh", "\n")
 	for k, v := range config.DCSConfigs {
-		d[k] = DNode{
-			Name:  v.Name,
-			IP:    v.Ip,
-			Weigh: v.Weigh,
-			Pwd:   v.Password,
-		}
 		fmt.Print(k, "\t", v.Name, "\t", v.Ip, "\t", v.Weigh, "\n")
 	}
-	EntrySlot = setAllDNode(d)
-	EntrySlot.Face.IP = config.NowIP
+	EntrySlot = setAllDNode(config.DCSConfigs)
+	EntrySlot.Face.Ip = config.NowIP
 	if len(config.DCSConfigs) > 1 {
 		go RpcStart(config)
 	}
