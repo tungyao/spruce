@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/rpc/jsonrpc"
+	"strconv"
 	"testing"
 	"time"
 
@@ -28,7 +29,7 @@ func TestDialRing(t *testing.T) {
 			From:    "tong",
 			To:      "tung",
 			Time:    time.Now().Unix(),
-			Content: "hello ring",
+			Content: "hello ring" + strconv.Itoa(i),
 			Repeat:  i,
 			Loop:    i,
 			Next:    nil,
@@ -55,7 +56,7 @@ func TestDialRing2(t *testing.T) {
 			From:    "tong",
 			To:      "tung",
 			Time:    time.Now().Unix(),
-			Content: "hello ring",
+			Content: "hello ring" + strconv.Itoa(i),
 			Repeat:  i,
 			Loop:    i,
 			Next:    nil,

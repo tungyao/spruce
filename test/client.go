@@ -17,7 +17,7 @@ func init() {
 	flag.StringVar(&addr, "addr", "47.102.156.149:6998", "listen port")
 }
 func main() {
-	p, _ := ap.NewPool(1, "47.102.156.149:6998")
+	p, _ := ap.NewPool(1, "127.0.0.1:6998")
 	for {
 		var operation string
 		var key string
