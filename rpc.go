@@ -1,6 +1,7 @@
 package spruce
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net"
@@ -10,30 +11,28 @@ import (
 
 // rpc method
 //
+//type Operation struct {
+//}
 type Operation struct {
-}
-type OperationArgs struct {
-	Key        []byte
-	Value      interface{}
-	Expiration int64
+	UnimplementedOperationServer
 }
 
 // 心跳检测
 
-func (o *Operation) Get(args *OperationArgs, result *interface{}) error {
-	log.Println("rpc get =>", args)
-	*result = balala.Get(args.Key)
-	return nil
+func (o *Operation) Get(ctx context.Context, in *OperationArgs) (*Result, error) {
+	log.Println("rpc get =>", in.String())
+	result := &Result{Value: balala.Get(in.Key).([]byte)}
+	return result, nil
 }
-func (o *Operation) Delete(args *OperationArgs, result *interface{}) error {
-	log.Println("rpc get =>", args)
-	*result = balala.Delete(args.Key)
-	return nil
+func (o *Operation) Delete(ctx context.Context, in *OperationArgs) (*DeleteResult, error) {
+	log.Println("rpc set =>", in.String())
+	result := &DeleteResult{Value: balala.Delete(in.Key)}
+	return result, nil
 }
-func (o *Operation) Set(args *OperationArgs, result *int) error {
-	log.Println("rpc set =>", args)
-	*result = balala.Set(args.Key, args.Value, args.Expiration)
-	return nil
+func (o *Operation) Set(ctx context.Context, in *OperationArgs) (*SetResult, error) {
+	log.Println("rpc set =>", in.String())
+	result := &SetResult{Position: int64(balala.Set(in.Key, in.Value, in.Expiration))}
+	return result, nil
 }
 
 type Watcher struct {
