@@ -2,7 +2,7 @@ package spruce
 
 import (
 	"context"
-	"fmt"
+	"google.golang.org/grpc"
 	"log"
 	"net"
 	"net/rpc"
@@ -36,18 +36,15 @@ func (o *Operation) Set(ctx context.Context, in *OperationArgs) (*SetResult, err
 }
 
 type Watcher struct {
-}
-type WatcherData struct {
-	Time int64
+	UnimplementedWatcherServer
 }
 
 //func (w *Watcher) Ping(ip string) int8 {
 //
 //}
-func (w *Watcher) Pong(args *WatcherData, result *int8) error {
-	var x int8 = 12
-	*result = x
-	return nil
+func (w *Watcher) Pong(ctx context.Context, in *WatcherData) (*WatcherResult, error) {
+	result := &WatcherResult{Res: 12}
+	return result, nil
 }
 func (w *Watcher) Do(args *WatcherData, result *int8) error {
 	var x int8 = 13
@@ -93,12 +90,14 @@ func RpcStart(config Config) {
 	if err != nil {
 		log.Panicln(err)
 	}
-	listen, err := net.Listen("tcp", ":6999")
+	lis, err := net.Listen("tcp", ":6999")
 	if err != nil {
 		log.Panicln(err)
 	}
-	fmt.Println("\n\nRPC is listening =>", listen.Addr().String())
+	s := grpc.NewServer()
+	RegisterOperationServer(s, &Operation{})
+	RegisterWatcherServer(s, &Watcher{})
+	log.Println("\n\ngRPC is running")
 	go startWatcher(config)
-	//rpc.NewServer()
-	rpc.Accept(listen)
+	s.Serve(lis)
 }

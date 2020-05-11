@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	ap "git.yaop.ink/tungyao/awesome-pool"
+	"log"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -31,17 +32,19 @@ func TestReplace(t *testing.T) {
 	a := "abcd\n\t\r摇动"
 	fmt.Println(spruce.ReplaceTabCharacter([]byte(a)))
 	spruce.ToBytes([]byte("hello world"))
-	fmt.Println(json.Marshal(S{A:"asdasd"}))
+	fmt.Println(json.Marshal(S{A: "asdasd"}))
 }
 
 type S struct {
 	A string
 }
+
 func TestGHash(t *testing.T) {
-	hash := make(map[string]string, 10240)
-	for i := 0; i < 10240; i++ {
-		hash[strconv.Itoa(i+rand.Int())] = strconv.Itoa(i)
-	}
+	log.Println(85 >> 1)
+	//hash := make(map[string]string, 10240)
+	//for i := 0; i < 10240; i++ {
+	//	hash[strconv.Itoa(i+rand.Int())] = strconv.Itoa(i)
+	//}
 	//for i := 0; i < 100000; i++ {
 	//	t.Log(hash[strconv.Itoa(i)+"abc"])
 	//}
@@ -73,20 +76,20 @@ func TestSet(t *testing.T) {
 	fmt.Printf("%v, Grp: %3v, Times: %10d, miss:%6v, use: %12v, %8v/op\n",
 		runtime.Version(), "Sum", Sum, 0, Use, op)
 }
-func testQueuePutGoGet(t *testing.T, grp, cnt int) int  {
+func testQueuePutGoGet(t *testing.T, grp, cnt int) int {
 	p, _ := ap.NewPool(1, "127.0.0.1:6998")
 	var wg sync.WaitGroup
 	wg.Add(grp)
-	for i:=0;i<grp;i++ {
+	for i := 0; i < grp; i++ {
 		go func(g int) {
 			x := p.Get()
-			x.Write(EntrySet(strconv.Itoa(g),strconv.Itoa(g),0))
+			x.Write(EntrySet(strconv.Itoa(g), strconv.Itoa(g), 0))
 			x.Read()
 			wg.Done()
 		}(i)
 	}
 	wg.Add(grp)
-	for i:=0;i<grp;i++ {
+	for i := 0; i < grp; i++ {
 		go func(g int) {
 			x := p.Get()
 			x.Write(EntryGet(strconv.Itoa(g)))

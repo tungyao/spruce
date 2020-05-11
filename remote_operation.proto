@@ -19,3 +19,12 @@ message SetResult{
 message DeleteResult{
   bytes Value=1;
 }
+service Watcher {
+  rpc Pong(WatcherData) returns (WatcherResult){}
+}
+message WatcherData{
+  int64 Time=1;
+}
+message WatcherResult{
+  int64 Res =1;
+}

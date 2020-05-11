@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.21.0
 // 	protoc        v3.11.4
-// source: remote.proto
+// source: remote_operation.proto
 
 package spruce
 
@@ -42,7 +42,7 @@ type OperationArgs struct {
 func (x *OperationArgs) Reset() {
 	*x = OperationArgs{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_remote_proto_msgTypes[0]
+		mi := &file_remote_operation_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -55,7 +55,7 @@ func (x *OperationArgs) String() string {
 func (*OperationArgs) ProtoMessage() {}
 
 func (x *OperationArgs) ProtoReflect() protoreflect.Message {
-	mi := &file_remote_proto_msgTypes[0]
+	mi := &file_remote_operation_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -68,7 +68,7 @@ func (x *OperationArgs) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperationArgs.ProtoReflect.Descriptor instead.
 func (*OperationArgs) Descriptor() ([]byte, []int) {
-	return file_remote_proto_rawDescGZIP(), []int{0}
+	return file_remote_operation_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *OperationArgs) GetKey() []byte {
@@ -103,7 +103,7 @@ type Result struct {
 func (x *Result) Reset() {
 	*x = Result{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_remote_proto_msgTypes[1]
+		mi := &file_remote_operation_proto_msgTypes[1]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -116,7 +116,7 @@ func (x *Result) String() string {
 func (*Result) ProtoMessage() {}
 
 func (x *Result) ProtoReflect() protoreflect.Message {
-	mi := &file_remote_proto_msgTypes[1]
+	mi := &file_remote_operation_proto_msgTypes[1]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -129,7 +129,7 @@ func (x *Result) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Result.ProtoReflect.Descriptor instead.
 func (*Result) Descriptor() ([]byte, []int) {
-	return file_remote_proto_rawDescGZIP(), []int{1}
+	return file_remote_operation_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Result) GetValue() []byte {
@@ -150,7 +150,7 @@ type SetResult struct {
 func (x *SetResult) Reset() {
 	*x = SetResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_remote_proto_msgTypes[2]
+		mi := &file_remote_operation_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -163,7 +163,7 @@ func (x *SetResult) String() string {
 func (*SetResult) ProtoMessage() {}
 
 func (x *SetResult) ProtoReflect() protoreflect.Message {
-	mi := &file_remote_proto_msgTypes[2]
+	mi := &file_remote_operation_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -176,7 +176,7 @@ func (x *SetResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetResult.ProtoReflect.Descriptor instead.
 func (*SetResult) Descriptor() ([]byte, []int) {
-	return file_remote_proto_rawDescGZIP(), []int{2}
+	return file_remote_operation_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SetResult) GetPosition() int64 {
@@ -197,7 +197,7 @@ type DeleteResult struct {
 func (x *DeleteResult) Reset() {
 	*x = DeleteResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_remote_proto_msgTypes[3]
+		mi := &file_remote_operation_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -210,7 +210,7 @@ func (x *DeleteResult) String() string {
 func (*DeleteResult) ProtoMessage() {}
 
 func (x *DeleteResult) ProtoReflect() protoreflect.Message {
-	mi := &file_remote_proto_msgTypes[3]
+	mi := &file_remote_operation_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -223,7 +223,7 @@ func (x *DeleteResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteResult.ProtoReflect.Descriptor instead.
 func (*DeleteResult) Descriptor() ([]byte, []int) {
-	return file_remote_proto_rawDescGZIP(), []int{3}
+	return file_remote_operation_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DeleteResult) GetValue() []byte {
@@ -233,23 +233,122 @@ func (x *DeleteResult) GetValue() []byte {
 	return nil
 }
 
-var File_remote_proto protoreflect.FileDescriptor
+type WatcherData struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
 
-var file_remote_proto_rawDesc = []byte{
-	0x0a, 0x0c, 0x72, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06,
-	0x73, 0x70, 0x72, 0x75, 0x63, 0x65, 0x22, 0x57, 0x0a, 0x0d, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x41, 0x72, 0x67, 0x73, 0x12, 0x10, 0x0a, 0x03, 0x4b, 0x65, 0x79, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0c, 0x52, 0x03, 0x4b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c,
-	0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12,
-	0x1e, 0x0a, 0x0a, 0x45, 0x78, 0x70, 0x69, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x03, 0x52, 0x0a, 0x45, 0x78, 0x70, 0x69, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22,
-	0x1e, 0x0a, 0x06, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c,
-	0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x22,
-	0x27, 0x0a, 0x09, 0x53, 0x65, 0x74, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x1a, 0x0a, 0x08,
-	0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08,
-	0x50, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x24, 0x0a, 0x0c, 0x44, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75,
-	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x32, 0xa7,
+	Time int64 `protobuf:"varint,1,opt,name=Time,proto3" json:"Time,omitempty"`
+}
+
+func (x *WatcherData) Reset() {
+	*x = WatcherData{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_remote_operation_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WatcherData) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatcherData) ProtoMessage() {}
+
+func (x *WatcherData) ProtoReflect() protoreflect.Message {
+	mi := &file_remote_operation_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatcherData.ProtoReflect.Descriptor instead.
+func (*WatcherData) Descriptor() ([]byte, []int) {
+	return file_remote_operation_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *WatcherData) GetTime() int64 {
+	if x != nil {
+		return x.Time
+	}
+	return 0
+}
+
+type WatcherResult struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Res int64 `protobuf:"varint,1,opt,name=Res,proto3" json:"Res,omitempty"`
+}
+
+func (x *WatcherResult) Reset() {
+	*x = WatcherResult{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_remote_operation_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *WatcherResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatcherResult) ProtoMessage() {}
+
+func (x *WatcherResult) ProtoReflect() protoreflect.Message {
+	mi := &file_remote_operation_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatcherResult.ProtoReflect.Descriptor instead.
+func (*WatcherResult) Descriptor() ([]byte, []int) {
+	return file_remote_operation_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *WatcherResult) GetRes() int64 {
+	if x != nil {
+		return x.Res
+	}
+	return 0
+}
+
+var File_remote_operation_proto protoreflect.FileDescriptor
+
+var file_remote_operation_proto_rawDesc = []byte{
+	0x0a, 0x16, 0x72, 0x65, 0x6d, 0x6f, 0x74, 0x65, 0x5f, 0x6f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x06, 0x73, 0x70, 0x72, 0x75, 0x63, 0x65,
+	0x22, 0x57, 0x0a, 0x0d, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x72, 0x67,
+	0x73, 0x12, 0x10, 0x0a, 0x03, 0x4b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x03,
+	0x4b, 0x65, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0c, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x45, 0x78, 0x70,
+	0x69, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0a, 0x45,
+	0x78, 0x70, 0x69, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0x1e, 0x0a, 0x06, 0x52, 0x65, 0x73,
+	0x75, 0x6c, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0c, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x27, 0x0a, 0x09, 0x53, 0x65, 0x74,
+	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69,
+	0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x50, 0x6f, 0x73, 0x69, 0x74, 0x69,
+	0x6f, 0x6e, 0x22, 0x24, 0x0a, 0x0c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x52, 0x65, 0x73, 0x75,
+	0x6c, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x0c, 0x52, 0x05, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x22, 0x21, 0x0a, 0x0b, 0x57, 0x61, 0x74, 0x63,
+	0x68, 0x65, 0x72, 0x44, 0x61, 0x74, 0x61, 0x12, 0x12, 0x0a, 0x04, 0x54, 0x69, 0x6d, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x04, 0x54, 0x69, 0x6d, 0x65, 0x22, 0x21, 0x0a, 0x0d, 0x57,
+	0x61, 0x74, 0x63, 0x68, 0x65, 0x72, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x12, 0x10, 0x0a, 0x03,
+	0x52, 0x65, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x03, 0x52, 0x65, 0x73, 0x32, 0xa7,
 	0x01, 0x0a, 0x09, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x2e, 0x0a, 0x03,
 	0x47, 0x65, 0x74, 0x12, 0x15, 0x2e, 0x73, 0x70, 0x72, 0x75, 0x63, 0x65, 0x2e, 0x4f, 0x70, 0x65,
 	0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x72, 0x67, 0x73, 0x1a, 0x0e, 0x2e, 0x73, 0x70, 0x72,
@@ -260,49 +359,58 @@ var file_remote_proto_rawDesc = []byte{
 	0x37, 0x0a, 0x06, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x12, 0x15, 0x2e, 0x73, 0x70, 0x72, 0x75,
 	0x63, 0x65, 0x2e, 0x4f, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x41, 0x72, 0x67, 0x73,
 	0x1a, 0x14, 0x2e, 0x73, 0x70, 0x72, 0x75, 0x63, 0x65, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
-	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x22, 0x00, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x22, 0x00, 0x32, 0x3f, 0x0a, 0x07, 0x57, 0x61, 0x74, 0x63,
+	0x68, 0x65, 0x72, 0x12, 0x34, 0x0a, 0x04, 0x50, 0x6f, 0x6e, 0x67, 0x12, 0x13, 0x2e, 0x73, 0x70,
+	0x72, 0x75, 0x63, 0x65, 0x2e, 0x57, 0x61, 0x74, 0x63, 0x68, 0x65, 0x72, 0x44, 0x61, 0x74, 0x61,
+	0x1a, 0x15, 0x2e, 0x73, 0x70, 0x72, 0x75, 0x63, 0x65, 0x2e, 0x57, 0x61, 0x74, 0x63, 0x68, 0x65,
+	0x72, 0x52, 0x65, 0x73, 0x75, 0x6c, 0x74, 0x22, 0x00, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
-	file_remote_proto_rawDescOnce sync.Once
-	file_remote_proto_rawDescData = file_remote_proto_rawDesc
+	file_remote_operation_proto_rawDescOnce sync.Once
+	file_remote_operation_proto_rawDescData = file_remote_operation_proto_rawDesc
 )
 
-func file_remote_proto_rawDescGZIP() []byte {
-	file_remote_proto_rawDescOnce.Do(func() {
-		file_remote_proto_rawDescData = protoimpl.X.CompressGZIP(file_remote_proto_rawDescData)
+func file_remote_operation_proto_rawDescGZIP() []byte {
+	file_remote_operation_proto_rawDescOnce.Do(func() {
+		file_remote_operation_proto_rawDescData = protoimpl.X.CompressGZIP(file_remote_operation_proto_rawDescData)
 	})
-	return file_remote_proto_rawDescData
+	return file_remote_operation_proto_rawDescData
 }
 
-var file_remote_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_remote_proto_goTypes = []interface{}{
+var file_remote_operation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_remote_operation_proto_goTypes = []interface{}{
 	(*OperationArgs)(nil), // 0: spruce.OperationArgs
 	(*Result)(nil),        // 1: spruce.Result
 	(*SetResult)(nil),     // 2: spruce.SetResult
 	(*DeleteResult)(nil),  // 3: spruce.DeleteResult
+	(*WatcherData)(nil),   // 4: spruce.WatcherData
+	(*WatcherResult)(nil), // 5: spruce.WatcherResult
 }
-var file_remote_proto_depIdxs = []int32{
+var file_remote_operation_proto_depIdxs = []int32{
 	0, // 0: spruce.Operation.Get:input_type -> spruce.OperationArgs
 	0, // 1: spruce.Operation.Set:input_type -> spruce.OperationArgs
 	0, // 2: spruce.Operation.Delete:input_type -> spruce.OperationArgs
-	1, // 3: spruce.Operation.Get:output_type -> spruce.Result
-	2, // 4: spruce.Operation.Set:output_type -> spruce.SetResult
-	3, // 5: spruce.Operation.Delete:output_type -> spruce.DeleteResult
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	4, // 3: spruce.Watcher.Pong:input_type -> spruce.WatcherData
+	1, // 4: spruce.Operation.Get:output_type -> spruce.Result
+	2, // 5: spruce.Operation.Set:output_type -> spruce.SetResult
+	3, // 6: spruce.Operation.Delete:output_type -> spruce.DeleteResult
+	5, // 7: spruce.Watcher.Pong:output_type -> spruce.WatcherResult
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_remote_proto_init() }
-func file_remote_proto_init() {
-	if File_remote_proto != nil {
+func init() { file_remote_operation_proto_init() }
+func file_remote_operation_proto_init() {
+	if File_remote_operation_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_remote_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_remote_operation_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*OperationArgs); i {
 			case 0:
 				return &v.state
@@ -314,7 +422,7 @@ func file_remote_proto_init() {
 				return nil
 			}
 		}
-		file_remote_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+		file_remote_operation_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Result); i {
 			case 0:
 				return &v.state
@@ -326,7 +434,7 @@ func file_remote_proto_init() {
 				return nil
 			}
 		}
-		file_remote_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+		file_remote_operation_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*SetResult); i {
 			case 0:
 				return &v.state
@@ -338,8 +446,32 @@ func file_remote_proto_init() {
 				return nil
 			}
 		}
-		file_remote_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+		file_remote_operation_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteResult); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_remote_operation_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WatcherData); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_remote_operation_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*WatcherResult); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -355,20 +487,20 @@ func file_remote_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_remote_proto_rawDesc,
+			RawDescriptor: file_remote_operation_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
-		GoTypes:           file_remote_proto_goTypes,
-		DependencyIndexes: file_remote_proto_depIdxs,
-		MessageInfos:      file_remote_proto_msgTypes,
+		GoTypes:           file_remote_operation_proto_goTypes,
+		DependencyIndexes: file_remote_operation_proto_depIdxs,
+		MessageInfos:      file_remote_operation_proto_msgTypes,
 	}.Build()
-	File_remote_proto = out.File
-	file_remote_proto_rawDesc = nil
-	file_remote_proto_goTypes = nil
-	file_remote_proto_depIdxs = nil
+	File_remote_operation_proto = out.File
+	file_remote_operation_proto_rawDesc = nil
+	file_remote_operation_proto_goTypes = nil
+	file_remote_operation_proto_depIdxs = nil
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -520,5 +652,77 @@ var _Operation_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "remote.proto",
+	Metadata: "remote_operation.proto",
+}
+
+// WatcherClient is the client API for Watcher service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type WatcherClient interface {
+	Pong(ctx context.Context, in *WatcherData, opts ...grpc.CallOption) (*WatcherResult, error)
+}
+
+type watcherClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewWatcherClient(cc grpc.ClientConnInterface) WatcherClient {
+	return &watcherClient{cc}
+}
+
+func (c *watcherClient) Pong(ctx context.Context, in *WatcherData, opts ...grpc.CallOption) (*WatcherResult, error) {
+	out := new(WatcherResult)
+	err := c.cc.Invoke(ctx, "/spruce.Watcher/Pong", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// WatcherServer is the server API for Watcher service.
+type WatcherServer interface {
+	Pong(context.Context, *WatcherData) (*WatcherResult, error)
+}
+
+// UnimplementedWatcherServer can be embedded to have forward compatible implementations.
+type UnimplementedWatcherServer struct {
+}
+
+func (*UnimplementedWatcherServer) Pong(context.Context, *WatcherData) (*WatcherResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Pong not implemented")
+}
+
+func RegisterWatcherServer(s *grpc.Server, srv WatcherServer) {
+	s.RegisterService(&_Watcher_serviceDesc, srv)
+}
+
+func _Watcher_Pong_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WatcherData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WatcherServer).Pong(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/spruce.Watcher/Pong",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WatcherServer).Pong(ctx, req.(*WatcherData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Watcher_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "spruce.Watcher",
+	HandlerType: (*WatcherServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Pong",
+			Handler:    _Watcher_Pong_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "remote_operation.proto",
 }
