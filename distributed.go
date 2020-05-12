@@ -1,16 +1,18 @@
 package spruce
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-yaml/yaml"
+	"google.golang.org/grpc"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
-	"net/rpc"
 	"os"
 	"strconv"
 	"sync"
+	"time"
 )
 
 const (
@@ -308,56 +310,50 @@ func (s *Slot) Set(lang []byte) []byte {
 		}, s.All[ns].Ip))}
 	}
 }
-func GetRpc(args *OperationArgs, address string) interface{} {
-	// defer func() {
-	//	x := recover()
-	//	log.Panicln(x)
-	// }()
-	client, err := rpc.Dial("tcp", address)
+func GetRpc(args *OperationArgs, address string) []byte {
+	conn, err := grpc.Dial(address)
 	if err != nil {
 		log.Panicln(err)
 	}
-	var result interface{}
-	err = client.Call("Operation.Get", args, &result)
+	defer conn.Close()
+	op := NewOperationClient(conn)
+	ctx, cancle := context.WithTimeout(context.Background(), time.Second)
+	defer cancle()
+	res, err := op.Get(ctx, args)
 	if err != nil {
 		log.Panicln(err)
 	}
-	client.Close()
-	return result
+	return res.Value
 }
 func DeleteRpc(args *OperationArgs, address string) []byte {
-	// defer func() {
-	//	x := recover()
-	//	log.Panicln(x)
-	// }()
-	client, err := rpc.Dial("tcp", address)
+	conn, err := grpc.Dial(address)
 	if err != nil {
 		log.Panicln(err)
 	}
-	var result []byte
-	err = client.Call("Operation.Delete", args, &result)
+	defer conn.Close()
+	op := NewOperationClient(conn)
+	ctx, cancle := context.WithTimeout(context.Background(), time.Second)
+	defer cancle()
+	res, err := op.Delete(ctx, args)
 	if err != nil {
 		log.Panicln(err)
 	}
-	client.Close()
-	return result
+	return res.Value
 }
 func SetRpc(args *OperationArgs, address string) int {
-	// defer func() {
-	//	x := recover()
-	//	log.Panicln(x)
-	// }()
-	client, err := rpc.Dial("tcp", address)
+	client, err := grpc.Dial(address)
 	if err != nil {
-		log.Panicln("338", err)
+		return 0
 	}
-	var result int
-	err = client.Call("Operation.Set", args, &result)
+	defer client.Close()
+	nrc := NewOperationClient(client)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	rest, err := nrc.Set(ctx, args)
 	if err != nil {
 		log.Panicln("343", err)
 	}
-	defer client.Close()
-	return result
+	return int(rest.Position)
 }
 func getRemote(lang []byte, ip string) []byte {
 	con, err := net.Dial("tcp", ip)

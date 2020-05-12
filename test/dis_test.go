@@ -67,23 +67,23 @@ func TestBack(t *testing.T) {
 }
 func TestDIS3(t *testing.T) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	conf := make([]spruce.DNode, 1)
+	conf := make([]spruce.DNode, 2)
 	conf[0] = spruce.DNode{
 		Name:     "master",
 		Ip:       "127.0.0.1:6999",
 		Weigh:    2,
 		Password: "",
 	}
-	// conf[1] = spruce.DCSConfig{
-	//	Name:     "node",
-	//	Ip:       "192.168.0.114:82",
-	//	Weigh:    1,
-	//	Password: "",
-	// }
+	conf[1] = spruce.DNode{
+		Name:     "node",
+		Ip:       "192.168.0.114:82",
+		Weigh:    1,
+		Password: "",
+	}
 	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.MEMORY,
 		DCSConfigFile: "",
-		DNode:    conf,
+		DNode:         conf,
 		Addr:          ":6998",
 		NowIP:         "127.0.0.1:6999",
 		KeepAlive:     false,
