@@ -10,8 +10,8 @@ import (
 )
 
 type node struct {
-	key   []byte
-	value interface{}
+	Key   []byte
+	Value interface{}
 	at    int64 `insertion time -> unix time -> second`
 	et    int64 `Expiration time -> second`
 	next  *node
@@ -57,11 +57,11 @@ func CreateHash(n int) *Hash {
 func find(key []byte, node *node) interface{} {
 	tmp := node
 	if tmp == nil || (time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0) {
-		//tmp.check = false
+		// tmp.check = false
 		return nil
 	}
 	for tmp != nil {
-		if !Equal(tmp.key, key) {
+		if !Equal(tmp.Key, key) {
 			tmp = tmp.next
 			continue
 		}
@@ -74,12 +74,12 @@ func find(key []byte, node *node) interface{} {
 	if tmp.check == false {
 		return nil
 	}
-	return tmp.value
+	return tmp.Value
 }
 func newNode(k, v []byte, deep int, exptime int64) *node {
 	return &node{
-		key:   k,
-		value: v,
+		Key:   k,
+		Value: v,
 		at:    time.Now().Unix(),
 		et:    exptime,
 		deep:  deep,
@@ -94,8 +94,8 @@ func (h *Hash) Set(key []byte, value interface{}, expTime int64) int {
 	d := h.ver[pos]
 	if d == nil {
 		h.ver[pos] = &node{
-			key:   key,
-			value: value,
+			Key:   key,
+			Value: value,
 			at:    time.Now().Unix(),
 			et:    expTime,
 			next:  nil,
@@ -105,10 +105,10 @@ func (h *Hash) Set(key []byte, value interface{}, expTime int64) int {
 		}
 		return int(pos)
 	}
-	if Equal(d.key, key) {
+	if Equal(d.Key, key) {
 		h.ver[pos] = &node{
-			key:   key,
-			value: value,
+			Key:   key,
+			Value: value,
 			at:    time.Now().Unix(),
 			et:    expTime,
 			next:  d.next,
@@ -123,8 +123,8 @@ func (h *Hash) Set(key []byte, value interface{}, expTime int64) int {
 	}
 	h.clone += 1
 	d = &node{
-		key:   key,
-		value: value,
+		Key:   key,
+		Value: value,
 		at:    time.Now().Unix(),
 		et:    expTime,
 		next:  d.next,
@@ -193,13 +193,13 @@ func (h *Hash) Delete(key []byte) []byte {
 	h.rw.RLock()
 	_, v := delete(key, h.ver[pos])
 	h.rw.RUnlock()
-	//h.ver[pos] = n
+	// h.ver[pos] = n
 	return v
 }
 func delete(key []byte, nod *node) (*node, []byte) {
 	for nod != nil {
 		p1 := nod.next
-		if Equal(nod.key, key) {
+		if Equal(nod.Key, key) {
 			nod.check = false
 			return nod, nil
 		}
@@ -213,9 +213,9 @@ func FindAll(n []*node) []byte {
 	for _, v := range tmp {
 		t := v
 		for t != nil {
-			if len(t.key) != 0 {
-				//x := make([]byte, 0)
-				data += string(t.key) + "\t\t" + fmt.Sprintf("%s", t.value) + "\n"
+			if len(t.Key) != 0 {
+				// x := make([]byte, 0)
+				data += string(t.Key) + "\t\t" + fmt.Sprintf("%s", t.Value) + "\n"
 			}
 			t = t.next
 		}
@@ -228,8 +228,23 @@ func (h *Hash) GetAll() []interface{} {
 	for _, v := range tmp {
 		t := v
 		for t != nil {
-			if len(t.key) != 0 && t.check {
-				data = append(data, t.value)
+			if len(t.Key) != 0 && t.check {
+				data = append(data, t.Value)
+			}
+			t = t.next
+		}
+	}
+	return data
+}
+
+func (h *Hash) GetAllWithKey() []*node {
+	tmp := h.ver
+	data := make([]*node, 0)
+	for _, v := range tmp {
+		t := v
+		for t != nil {
+			if len(t.Key) != 0 && t.check {
+				data = append(data, t)
 			}
 			t = t.next
 		}
