@@ -3,8 +3,6 @@ package spruce
 import (
 	"context"
 	"fmt"
-	"github.com/go-yaml/yaml"
-	"google.golang.org/grpc"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,6 +11,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/go-yaml/yaml"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -30,17 +31,18 @@ type Config struct {
 	IsBackup        bool `自动备份`
 	ConnChanBufSize int  `连接信道缓冲区大小`
 	ConnChanMaxSize int  `最大连接数`
+	MaxSlot         int  `最大hash槽数量`
 }
 type FileConfig struct {
 	Config []DNode `yaml:"config"`
 }
 
-//type DCSConfig struct {
+// type DCSConfig struct {
 //	Name     string `json:"name"`
 //	Ip       string `json:"ip"`
 //	Weigh    int    `json:"weigh"`
 //	Password string `json:"password"`
-//}
+// }
 type DNode struct {
 	Name     string `yaml:"name"`
 	Ip       string `yaml:"ip"`
@@ -59,7 +61,7 @@ type Slot struct {
 var (
 	AllSlot     []DNode
 	EntrySlot   *Slot
-	balala      = CreateHash(4096)
+	balala      *Hash
 	randomMutex = sync.Mutex{}
 	mux         sync.Mutex
 	action      chan int // 1 是增加 -1 是减少 // 10个缓冲
@@ -89,7 +91,7 @@ func setAllDNode(c []DNode) *Slot {
 	return &Slot{Count: len(c), Face: c[0], Other: c[1:], All: c, cry: cryptTable}
 }
 
-//func New(config Config) *Slot {
+// func New(config Config) *Slot {
 //	CheckConfig(&config, Config{
 //		ConfigType:    FILE,
 //		DCSConfigFile: "./",
@@ -98,17 +100,18 @@ func setAllDNode(c []DNode) *Slot {
 //	})
 //	return setAllDNode(ParseConfigFile(config.DCSConfigFile))
 //
-//}
+// }
 
 // TODO Start
 func StartSpruceDistributed(config Config) *Slot {
-	//CheckConfig(&config, Config{
+	balala = CreateHash(config.MaxSlot)
+	// CheckConfig(&config, Config{
 	//	ConfigType:      FILE,
 	//	DCSConfigFile:   "./config.yml",
 	//	Addr:            ":6998",
 	//	ConnChanBufSize: 2048,
 	//	ConnChanMaxSize: 2048,
-	//})
+	// })
 	// region print logo
 	fmt.Print(`
   ___ _ __  _ __ _   _  ___ ___ 
@@ -429,8 +432,8 @@ func (s *Slot) getHashPos(str []byte) uint {
 	return nHashPos
 }
 func ParseConfigFile(path string) []DNode {
-	//fmt.Println(path)
-	//yml := ymload.Format(path)
+	// fmt.Println(path)
+	// yml := ymload.Format(path)
 	var config FileConfig
 	fs, err := os.Open(path)
 	if err != nil {
@@ -441,18 +444,18 @@ func ParseConfigFile(path string) []DNode {
 	if err != nil {
 		log.Panicln(err)
 	}
-	//dn := make([]DNode, 0)
-	//for _, v := range config.Config {
+	// dn := make([]DNode, 0)
+	// for _, v := range config.Config {
 	//	ds := DNode{}
 	//	ds.Ip = v.Ip
 	//	ds.Name = v.Name
 	//	ds.Weigh = v.Weigh
 	//	ds.Pwd = v.Password
 	//	dn = append(dn, ds)
-	//}
+	// }
 	return config.Config
-	//dn := make([]DNode, 0)
-	//for _, v := range yml {
+	// dn := make([]DNode, 0)
+	// for _, v := range yml {
 	//	ds := DNode{}
 	//	if v["ip"] != nil {
 	//		ds.Ip = v["ip"].(string)
@@ -468,8 +471,8 @@ func ParseConfigFile(path string) []DNode {
 	//		ds.Pwd = v["password"].(string)
 	//	}
 	//	dn = append(dn, ds)
-	//}
-	//return dn
+	// }
+	// return dn
 	// f, err := os.Open(path)
 	// defer f.Close()
 	// if err != nil {
