@@ -317,7 +317,7 @@ func GetRpc(args *OperationArgs, address string) []byte {
 	}
 	defer conn.Close()
 	op := NewOperationClient(conn)
-	ctx, cancle := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancle := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancle()
 	res, err := op.Get(ctx, args)
 	if err != nil {
@@ -332,7 +332,7 @@ func DeleteRpc(args *OperationArgs, address string) []byte {
 	}
 	defer conn.Close()
 	op := NewOperationClient(conn)
-	ctx, cancle := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancle := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancle()
 	res, err := op.Delete(ctx, args)
 	if err != nil {
@@ -347,7 +347,7 @@ func SetRpc(args *OperationArgs, address string) int {
 	}
 	defer client.Close()
 	nrc := NewOperationClient(client)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	rest, err := nrc.Set(ctx, args)
 	if err != nil {

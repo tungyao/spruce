@@ -214,7 +214,7 @@ func FindAll(n []*node) []byte {
 		t := v
 		for t != nil {
 			if len(t.Key) != 0 {
-				// x := make([]byte, 0)
+				//x := make([]byte, 0)
 				data += string(t.Key) + "\t\t" + fmt.Sprintf("%s", t.Value) + "\n"
 			}
 			t = t.next
@@ -230,21 +230,6 @@ func (h *Hash) GetAll() []interface{} {
 		for t != nil {
 			if len(t.Key) != 0 && t.check {
 				data = append(data, t.Value)
-			}
-			t = t.next
-		}
-	}
-	return data
-}
-
-func (h *Hash) GetAllWithKey() []*node {
-	tmp := h.ver
-	data := make([]*node, 0)
-	for _, v := range tmp {
-		t := v
-		for t != nil {
-			if len(t.Key) != 0 && t.check {
-				data = append(data, t)
 			}
 			t = t.next
 		}

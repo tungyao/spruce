@@ -10,14 +10,10 @@ import (
 )
 
 // rpc method
-//
-//type Operation struct {
-//}
+
 type Operation struct {
 	UnimplementedOperationServer
 }
-
-// 心跳检测
 
 func (o *Operation) Get(ctx context.Context, in *OperationArgs) (*Result, error) {
 	log.Println("rpc get =>", in.String())
@@ -34,6 +30,8 @@ func (o *Operation) Set(ctx context.Context, in *OperationArgs) (*SetResult, err
 	result := &SetResult{Position: int64(balala.Set(in.Key, in.Value, in.Expiration))}
 	return result, nil
 }
+
+// 长连接心跳检测
 
 type Watcher struct {
 	UnimplementedWatcherServer
@@ -98,6 +96,6 @@ func RpcStart(config Config) {
 	RegisterOperationServer(s, &Operation{})
 	RegisterWatcherServer(s, &Watcher{})
 	log.Println("\n\ngRPC is running")
-	go startWatcher(config)
+	// go startWatcher(config)
 	s.Serve(lis)
 }
