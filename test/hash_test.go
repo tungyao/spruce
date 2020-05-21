@@ -6,9 +6,8 @@ import (
 	"fmt"
 	ap "git.yaop.ink/tungyao/awesome-pool"
 	"log"
-	"math/rand"
 	"runtime"
-	"strconv"
+	strconv "strconv"
 	"sync"
 	"testing"
 	"time"
@@ -17,16 +16,17 @@ import (
 func TestHash(t *testing.T) {
 	h := spruce.CreateHash(512)
 	for i := 0; i < 100; i++ {
-		h.Set([]byte(strconv.Itoa(i)), []byte(strconv.Itoa(i)), 0)
+		h.Set([]byte(strconv.Itoa(i)), i, 0)
 	}
 	//t.Log(string(h.Delete([]byte("9"))))
 	////t.Log(string(h.Get([]byte("9"))))
-	////h.Set([]byte(strconv.Itoa(9)), []byte(strconv.Itoa(9)),0)
-	//for i := 0; i < 100; i++ {
-	//	t.Log(string(h.Get([]byte(strconv.Itoa(i)))))
-	//}
-	//t.Log(string(h.Get([]byte(strconv.Itoa(88)))))
-	h.Storage()
+	//h.Set([]byte(strconv.Itoa(9)), []byte(strconv.Itoa(9)),0)
+	// for i := 0; i < 100; i++ {
+	// 	t.Log(h.Get([]byte(strconv.Itoa(i))))
+	// }
+	h.Delete([]byte(strconv.Itoa(16)))
+	t.Log(h.Get([]byte(strconv.Itoa(16))))
+	// h.Storage()
 }
 func TestReplace(t *testing.T) {
 	a := "abcd\n\t\r摇动"

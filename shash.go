@@ -18,12 +18,11 @@ type node struct {
 	deep  int
 	check bool // 用来检测当前插槽是不是有值存在
 	dl    int8
-	mux   sync.RWMutex
 }
 type Hash struct {
 	ver   []*node
 	clone int
-	rw    sync.RWMutex
+	rw    sync.Mutex
 }
 
 var CRY []uint
@@ -63,11 +62,14 @@ func find(key []byte, node *node) interface{} {
 	for tmp != nil {
 		if !Equal(tmp.Key, key) {
 			tmp = tmp.next
-			continue
+		} else {
+			break
 		}
-		break
 	}
-	if tmp == nil || time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
+	if tmp == nil {
+		return nil
+	}
+	if time.Now().Unix()-tmp.at > tmp.et && tmp.et != 0 {
 		tmp.check = false
 		return nil
 	}
@@ -88,50 +90,56 @@ func newNode(k, v []byte, deep int, exptime int64) *node {
 	}
 }
 func (h *Hash) Set(key []byte, value interface{}, expTime int64) int {
-	h.rw.RLock()
-	defer h.rw.RUnlock()
 	pos := h.GetHashPos(key)
+	h.rw.Lock()
+	defer h.rw.Unlock()
+	if h.ver[pos] == nil {
+		h.ver[pos] = &node{
+			Key:   key,
+			Value: value,
+			at:    time.Now().Unix(),
+			et:    expTime,
+			next: &node{
+				check: false,
+			},
+			deep:  0,
+			check: true,
+			dl:    0,
+		}
+		return int(pos)
+	}
+	if Equal(h.ver[pos].Key, key) {
+		h.ver[pos] = &node{
+			Key:   key,
+			Value: value,
+			at:    time.Now().Unix(),
+			et:    expTime,
+			next:  h.ver[pos].next,
+			deep:  0,
+			check: true,
+			dl:    0,
+		}
+		return int(pos)
+	}
 	d := h.ver[pos]
-	if d == nil {
-		h.ver[pos] = &node{
-			Key:   key,
-			Value: value,
-			at:    time.Now().Unix(),
-			et:    expTime,
-			next:  nil,
-			deep:  0,
-			check: true,
-			dl:    0,
-		}
-		return int(pos)
-	}
-	if Equal(d.Key, key) {
-		h.ver[pos] = &node{
-			Key:   key,
-			Value: value,
-			at:    time.Now().Unix(),
-			et:    expTime,
-			next:  d.next,
-			deep:  0,
-			check: true,
-			dl:    0,
-		}
-		return int(pos)
-	}
-	for d.next != nil && d.next.check == true {
+	for d.check == true {
 		d = d.next
 	}
 	h.clone += 1
-	d = &node{
-		Key:   key,
-		Value: value,
-		at:    time.Now().Unix(),
-		et:    expTime,
-		next:  d.next,
-		deep:  0,
-		check: true,
-		dl:    0,
+	d.Key = key
+	d.Value = value
+	d.at = time.Now().Unix()
+	d.et = expTime
+	d.check = true
+	d.dl = 0
+	if d.next == nil {
+		d.next = &node{
+			check: false,
+		}
+	} else {
+		d.next = d.next.next
 	}
+
 	return int(pos)
 }
 func (h *Hash) Get(key []byte) interface{} {
@@ -142,21 +150,21 @@ func (h *Hash) Get(key []byte) interface{} {
 	return find(key, h.ver[pos])
 }
 func (h *Hash) Storage() {
-	h.rw.RLock()
-	defer h.rw.RUnlock()
+	h.rw.Lock()
+	defer h.rw.Unlock()
 	FindAll(h.ver)
 }
 
 // 重新从文件中读取到内存中来
 func (h *Hash) Reload() {
-	h.rw.RLock()
-	defer h.rw.RUnlock()
+	h.rw.Lock()
+	defer h.rw.Unlock()
 }
 
 // 这个直接读取是程序启动时会默认执行的
 func (h *Hash) Load() {
-	h.rw.RLock()
-	defer h.rw.RUnlock()
+	h.rw.Lock()
+	defer h.rw.Unlock()
 }
 
 func (h *Hash) hashString(str []byte, hashcode uint) uint {
@@ -190,21 +198,44 @@ func (h *Hash) Clone() int {
 }
 func (h *Hash) Delete(key []byte) []byte {
 	pos := h.GetHashPos(key)
-	h.rw.RLock()
+	fmt.Println(pos)
+	h.rw.Lock()
 	_, v := delete(key, h.ver[pos])
-	h.rw.RUnlock()
+	h.rw.Unlock()
 	// h.ver[pos] = n
 	return v
 }
 func delete(key []byte, nod *node) (*node, []byte) {
-	for nod != nil {
+	x := &node{}
+	for nod.check == true {
 		p1 := nod.next
 		if Equal(nod.Key, key) {
-			nod.check = false
+			// 设置为 nil 等待gc
+			if nod.next.check == false {
+				x = nod.next
+				nod.check = x.check
+				nod.Key = x.Key
+				nod.Value = x.Value
+				nod.deep = x.deep
+				nod.at = x.at
+				nod.et = x.et
+				nod.dl = x.dl
+				nod.next = &node{
+					check: false,
+				}
+				x = nil
+				return nod, nil
+			} else {
+				nod = nod.next
+			}
 			return nod, nil
 		}
-		nod = p1.next
+		if p1 == nil {
+			break
+		}
+		nod = p1
 	}
+	fmt.Println(x)
 	return nod, nil
 }
 func FindAll(n []*node) []byte {
@@ -214,7 +245,7 @@ func FindAll(n []*node) []byte {
 		t := v
 		for t != nil {
 			if len(t.Key) != 0 {
-				//x := make([]byte, 0)
+				// x := make([]byte, 0)
 				data += string(t.Key) + "\t\t" + fmt.Sprintf("%s", t.Value) + "\n"
 			}
 			t = t.next
