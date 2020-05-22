@@ -1,16 +1,19 @@
 package spruce
 
 import (
+	"context"
 	"fmt"
-	"github.com/go-yaml/yaml"
 	"io"
 	"io/ioutil"
 	"log"
 	"net"
-	"net/rpc"
 	"os"
 	"strconv"
 	"sync"
+	"time"
+
+	"github.com/go-yaml/yaml"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -28,17 +31,18 @@ type Config struct {
 	IsBackup        bool `自动备份`
 	ConnChanBufSize int  `连接信道缓冲区大小`
 	ConnChanMaxSize int  `最大连接数`
+	MaxSlot         int  `最大hash槽数量`
 }
 type FileConfig struct {
 	Config []DNode `yaml:"config"`
 }
 
-//type DCSConfig struct {
+// type DCSConfig struct {
 //	Name     string `json:"name"`
 //	Ip       string `json:"ip"`
 //	Weigh    int    `json:"weigh"`
 //	Password string `json:"password"`
-//}
+// }
 type DNode struct {
 	Name     string `yaml:"name"`
 	Ip       string `yaml:"ip"`
@@ -57,7 +61,7 @@ type Slot struct {
 var (
 	AllSlot     []DNode
 	EntrySlot   *Slot
-	balala      = CreateHash(4096)
+	balala      *Hash
 	randomMutex = sync.Mutex{}
 	mux         sync.Mutex
 	action      chan int // 1 是增加 -1 是减少 // 10个缓冲
@@ -87,7 +91,7 @@ func setAllDNode(c []DNode) *Slot {
 	return &Slot{Count: len(c), Face: c[0], Other: c[1:], All: c, cry: cryptTable}
 }
 
-//func New(config Config) *Slot {
+// func New(config Config) *Slot {
 //	CheckConfig(&config, Config{
 //		ConfigType:    FILE,
 //		DCSConfigFile: "./",
@@ -96,17 +100,18 @@ func setAllDNode(c []DNode) *Slot {
 //	})
 //	return setAllDNode(ParseConfigFile(config.DCSConfigFile))
 //
-//}
+// }
 
 // TODO Start
 func StartSpruceDistributed(config Config) *Slot {
-	//CheckConfig(&config, Config{
+	balala = CreateHash(config.MaxSlot)
+	// CheckConfig(&config, Config{
 	//	ConfigType:      FILE,
 	//	DCSConfigFile:   "./config.yml",
 	//	Addr:            ":6998",
 	//	ConnChanBufSize: 2048,
 	//	ConnChanMaxSize: 2048,
-	//})
+	// })
 	// region print logo
 	fmt.Print(`
   ___ _ __  _ __ _   _  ___ ___ 
@@ -148,9 +153,8 @@ func client(config Config) {
 	fmt.Println("now ip is ", config.NowIP, "we would contrast it")
 	fmt.Println("server is running   =>", os.Getpid())
 	// 启动RPC 要判断如果只有一台主机则不能启动RPC
-	if EntrySlot.Count <= 1 {
-		NoRpcServer(&config)
-	} else { // 大于一台则只能只用RPC
+	go NoRpcServer(&config)
+	if EntrySlot.Count > 1 {
 		RpcStart(config)
 	}
 	// 监听所有的slot
@@ -309,56 +313,50 @@ func (s *Slot) Set(lang []byte) []byte {
 		}, s.All[ns].Ip))}
 	}
 }
-func GetRpc(args *OperationArgs, address string) interface{} {
-	// defer func() {
-	//	x := recover()
-	//	log.Panicln(x)
-	// }()
-	client, err := rpc.DialHTTP("tcp", address)
+func GetRpc(args *OperationArgs, address string) []byte {
+	conn, err := grpc.Dial(address)
 	if err != nil {
 		log.Panicln(err)
 	}
-	var result interface{}
-	err = client.Call("Operation.Get", args, &result)
+	defer conn.Close()
+	op := NewOperationClient(conn)
+	ctx, cancle := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancle()
+	res, err := op.Get(ctx, args)
 	if err != nil {
 		log.Panicln(err)
 	}
-	client.Close()
-	return result
+	return res.Value
 }
 func DeleteRpc(args *OperationArgs, address string) []byte {
-	// defer func() {
-	//	x := recover()
-	//	log.Panicln(x)
-	// }()
-	client, err := rpc.DialHTTP("tcp", address)
+	conn, err := grpc.Dial(address)
 	if err != nil {
 		log.Panicln(err)
 	}
-	var result []byte
-	err = client.Call("Operation.Delete", args, &result)
+	defer conn.Close()
+	op := NewOperationClient(conn)
+	ctx, cancle := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancle()
+	res, err := op.Delete(ctx, args)
 	if err != nil {
 		log.Panicln(err)
 	}
-	client.Close()
-	return result
+	return res.Value
 }
 func SetRpc(args *OperationArgs, address string) int {
-	// defer func() {
-	//	x := recover()
-	//	log.Panicln(x)
-	// }()
-	client, err := rpc.DialHTTP("tcp", address)
+	client, err := grpc.Dial(address)
 	if err != nil {
-		log.Panicln("338", err)
+		return 0
 	}
-	var result int
-	err = client.Call("Operation.Set", args, &result)
+	defer client.Close()
+	nrc := NewOperationClient(client)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	rest, err := nrc.Set(ctx, args)
 	if err != nil {
 		log.Panicln("343", err)
 	}
-	defer client.Close()
-	return result
+	return int(rest.Position)
 }
 func getRemote(lang []byte, ip string) []byte {
 	con, err := net.Dial("tcp", ip)
@@ -434,8 +432,8 @@ func (s *Slot) getHashPos(str []byte) uint {
 	return nHashPos
 }
 func ParseConfigFile(path string) []DNode {
-	//fmt.Println(path)
-	//yml := ymload.Format(path)
+	// fmt.Println(path)
+	// yml := ymload.Format(path)
 	var config FileConfig
 	fs, err := os.Open(path)
 	if err != nil {
@@ -446,18 +444,18 @@ func ParseConfigFile(path string) []DNode {
 	if err != nil {
 		log.Panicln(err)
 	}
-	//dn := make([]DNode, 0)
-	//for _, v := range config.Config {
+	// dn := make([]DNode, 0)
+	// for _, v := range config.Config {
 	//	ds := DNode{}
 	//	ds.Ip = v.Ip
 	//	ds.Name = v.Name
 	//	ds.Weigh = v.Weigh
 	//	ds.Pwd = v.Password
 	//	dn = append(dn, ds)
-	//}
+	// }
 	return config.Config
-	//dn := make([]DNode, 0)
-	//for _, v := range yml {
+	// dn := make([]DNode, 0)
+	// for _, v := range yml {
 	//	ds := DNode{}
 	//	if v["ip"] != nil {
 	//		ds.Ip = v["ip"].(string)
@@ -473,8 +471,8 @@ func ParseConfigFile(path string) []DNode {
 	//		ds.Pwd = v["password"].(string)
 	//	}
 	//	dn = append(dn, ds)
-	//}
-	//return dn
+	// }
+	// return dn
 	// f, err := os.Open(path)
 	// defer f.Close()
 	// if err != nil {

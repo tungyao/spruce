@@ -1,8 +1,8 @@
 package spruce
 
 import (
-	"fmt"
-	awesome "git.yaop.ink/tungyao/awesome-pool"
+	"context"
+	"google.golang.org/grpc"
 	"log"
 	"net"
 	"net/rpc"
@@ -10,47 +10,39 @@ import (
 )
 
 // rpc method
-//
+
 type Operation struct {
-}
-type OperationArgs struct {
-	Key        []byte
-	Value      interface{}
-	Expiration int64
+	UnimplementedOperationServer
 }
 
-// 心跳检测
+func (o *Operation) Get(ctx context.Context, in *OperationArgs) (*Result, error) {
+	log.Println("rpc get =>", in.String())
+	result := &Result{Value: balala.Get(in.Key).([]byte)}
+	return result, nil
+}
+func (o *Operation) Delete(ctx context.Context, in *OperationArgs) (*DeleteResult, error) {
+	log.Println("rpc set =>", in.String())
+	result := &DeleteResult{Value: balala.Delete(in.Key)}
+	return result, nil
+}
+func (o *Operation) Set(ctx context.Context, in *OperationArgs) (*SetResult, error) {
+	log.Println("rpc set =>", in.String())
+	result := &SetResult{Position: int64(balala.Set(in.Key, in.Value, in.Expiration))}
+	return result, nil
+}
 
-func (o *Operation) Get(args *OperationArgs, result *interface{}) error {
-	log.Println("rpc get =>", args)
-	*result = balala.Get(args.Key)
-	return nil
-}
-func (o *Operation) Delete(args *OperationArgs, result *interface{}) error {
-	log.Println("rpc get =>", args)
-	*result = balala.Delete(args.Key)
-	return nil
-}
-func (o *Operation) Set(args *OperationArgs, result *int) error {
-	log.Println("rpc set =>", args)
-	*result = balala.Set(args.Key, args.Value, args.Expiration)
-	return nil
-}
+// 长连接心跳检测
 
 type Watcher struct {
-	T []*awesome.Pool
-}
-type WatcherData struct {
-	Time int64
+	UnimplementedWatcherServer
 }
 
 //func (w *Watcher) Ping(ip string) int8 {
 //
 //}
-func (w *Watcher) Pong(args *WatcherData, result *int8) error {
-	var x int8 = 12
-	*result = x
-	return nil
+func (w *Watcher) Pong(ctx context.Context, in *WatcherData) (*WatcherResult, error) {
+	result := &WatcherResult{Res: 12}
+	return result, nil
 }
 func (w *Watcher) Do(args *WatcherData, result *int8) error {
 	var x int8 = 13
@@ -62,7 +54,7 @@ func (w *Watcher) Dead(args *WatcherData, result *int8) error {
 	*result = x
 	return nil
 }
-func startWatcher(dsc *[]DNode) {
+func startWatcher(dsc Config) {
 	log.Println("starting rpc watcher ...")
 	log.Print(`
 __     __     ______     ______   ______     __  __     ______     ______
@@ -72,60 +64,38 @@ __     __     ______     ______   ______     __  __     ______     ______
  \/_/   \/_/   \/_/\/_/     \/_/   \/_____/   \/_/\/_/   \/_____/   \/_/ /_/
 
 `)
-	wc := new(Watcher)
-	wc.T = make([]*awesome.Pool, len(*dsc))
-	goto Restart
-Restart:
-	var errx error
-	for k, v := range *dsc {
-		log.Println("ping address =>", v.Ip)
-		wc.T[k], errx = awesome.NewPool(10, v.Ip)
-		if errx != nil {
-			log.Println("ready reconnection ......")
-			<-time.After(time.Second * 5)
-			goto Restart
+	for _, v := range dsc.DNode {
+		if v.Ip == dsc.NowIP {
+			continue
 		}
-	}
-
-	for {
-		log.Println("monitor the watcher")
-		for _, v := range wc.T {
-			c := v.Get()
-			if c == nil {
-				log.Println("ready reconnection ......")
-				<-time.After(time.Second * 5)
-				goto Restart
-			}
-			client := rpc.NewClient(c.Conn)
-			var x int8
-			err := client.Call("Watcher.Pong", &WatcherData{}, &x)
-			if err != nil {
-				log.Println(err)
-			}
-			log.Println("get ping data =>", x)
-			client.Close()
+		c, err := rpc.Dial("tcp", v.Ip)
+		for err != nil {
+			c, err = rpc.Dial("tcp", v.Ip)
+			<-time.After(time.Second * 2)
 		}
-		<-time.After(time.Second * 2)
+		var x int8
+		err = c.Call("Watcher.Pong", &WatcherData{}, &x)
+		if err != nil {
+			log.Println(err)
+		}
+		log.Println("get ping data =>", x)
+		c.Close()
 	}
 }
-func RpcStart(address Config) {
-	newDCS := make([]DNode, 0)
-	for _, v := range address.DNode {
-		if v.Ip != address.NowIP {
-			newDCS = append(newDCS, v)
-		}
-	}
+func RpcStart(config Config) {
 	err := rpc.Register(new(Operation))
 	err = rpc.Register(new(Watcher))
 	if err != nil {
 		log.Panicln(err)
 	}
-	listen, err := net.Listen("tcp", ":82")
+	lis, err := net.Listen("tcp", ":6999")
 	if err != nil {
 		log.Panicln(err)
 	}
-	fmt.Println("\n\nRPC is listening =>", listen.Addr().String())
-	go startWatcher(&newDCS)
-	//rpc.NewServer()
-	rpc.Accept(listen)
+	s := grpc.NewServer()
+	RegisterOperationServer(s, &Operation{})
+	RegisterWatcherServer(s, &Watcher{})
+	log.Println("\n\ngRPC is running")
+	// go startWatcher(config)
+	s.Serve(lis)
 }

@@ -8,42 +8,45 @@ High Performance Distributed Key-value Database
 * message queue (ring architecture)
 ---
 ### Usage
-*
-```go
-func TestDIS2(t *testing.T) {
-  spruce.StartSpruceDistributed(spruce.Config{
-     ConfigType:    spruce.FILE,
-     DCSConfigFile: "./config.yml",
-     Addr:          "127.0.0.1:88",
-     KeepAlive:     false,
-     IsBackup:      false,
-     NowIP:         "127.0.0.1:88",
-  })
-    // OR
+#### create single server
+1. create app.go
+2. write it like this
+    ```go
+    conf := make([]spruce.DNode, 1)
+    conf[0] = spruce.DNode{
+            Name:     "master",
+            Ip:       "127.0.0.1:6999",
+            Weigh:    2,
+            Password: "",
+    }
     spruce.StartSpruceDistributed(spruce.Config{
-         ConfigType: spruce.MEMORY,
-         Addr:          "127.0.0.1:88",
-         KeepAlive:     false,
-         IsBackup:      false,
-         NowIP:         "127.0.0.1:88",
+            ConfigType:    spruce.MEMORY,
+            DCSConfigFile: "",
+            DNode:         conf,
+            Addr:          ":6998", 
+                    MaxSlot:        4096
+            NowIP:         "127.0.0.1:6999",
+            KeepAlive:     false,
+            IsBackup:      false,
     })
-}
-```
-```yml
-main_server:
-  name: client0
-  ip: 127.0.0.1:88
-  weight: 1
-two_server:
-  name: client1
-  ip: 127.0.0.1:89
-  weight: 2
+    ```
+3. connect it (two)
+    1. gRpc
+        ```go
+        service Operation {
+          rpc Get(OperationArgs) returns (Result){}
+          rpc Set(OperationArgs) returns (SetResult){}
+          rpc Delete(OperationArgs) returns (DeleteResult){}
+        }
+       message OperationArgs{
+         bytes Key =1;
+         bytes Value =2;
+         int64 Expiration=3;
+       }
+       message Result{
+         bytes Value=1;
+       }
+        ```
+       
+    2. achieve protocol
 
-```
-* *go run client.go*
-```
-127.0.0.1:88 >> set name spruce
-<
-127.0.0.1:88 >> get name
-spruce
-```

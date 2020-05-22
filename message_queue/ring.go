@@ -16,7 +16,7 @@ type Ring struct {
 	All      int    `当前所有的消息数`
 	mux      sync.RWMutex
 	register chan *Msg
-	head     chan *Msg
+	head     chan int
 	execute  chan *Msg
 }
 type Msg struct {
@@ -37,7 +37,7 @@ func NewMessage() *Ring {
 		Dead:     make([]*Msg, 0),
 		register: make(chan *Msg, 3000),
 		execute:  make(chan *Msg, 3000),
-		head:     make(chan *Msg, 3000),
+		head:     make(chan int, 3000),
 	}
 }
 func (r *Ring) loop() {
@@ -45,11 +45,7 @@ func (r *Ring) loop() {
 		for {
 			select {
 			case <-r.head:
-				//r.mux.RLock()
-				//r.execute <- r.Now
-				fmt.Println("head", r.Now)
-				//r.Now = r.Now.Next
-				//r.mux.RUnlock()
+				r.execute <- r.Now
 			}
 		}
 	}()
@@ -57,7 +53,6 @@ func (r *Ring) loop() {
 	for { // 检测入队
 		select {
 		case m := <-r.register:
-			r.mux.RLock()
 			if r.Now == nil {
 				r.Now = m
 				continue
@@ -68,11 +63,9 @@ func (r *Ring) loop() {
 				p1 = p2
 				p2 = p1.Next
 			}
-			fmt.Println(p2)
 			p2 = m
-			r.mux.RUnlock()
 			r.All++
-			r.head <- m //放入执行队列
+			r.head <- 1 // 提示有新进入
 		}
 	}
 }
@@ -109,10 +102,13 @@ func (r *Ring) Pull(msg *Msg, res *string) error {
 		*res = x.Content
 	} else {
 		r.mux.RLock()
-		r.Dead = append(r.Dead, x)
+		r.Dead = append(r.Dead, x.Next)
 		r.mux.RUnlock()
 		*res = "get error"
 	}
+	r.mux.Lock()
+	defer r.mux.Unlock()
+	r.Now = x.Next
 	return nil
 
 }

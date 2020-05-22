@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"golang.org/x/net/webdav"
 	"net/http"
+	"runtime"
 	"testing"
 
 	"../../spruce"
@@ -65,26 +66,27 @@ func TestBack(t *testing.T) {
 	http.ListenAndServe(":80", nil)
 }
 func TestDIS3(t *testing.T) {
-	conf := make([]spruce.DCSConfig, 1)
-	conf[0] = spruce.DCSConfig{
+	runtime.GOMAXPROCS(runtime.NumCPU())
+	conf := make([]spruce.DNode, 2)
+	conf[0] = spruce.DNode{
 		Name:     "master",
 		Ip:       "127.0.0.1:6999",
 		Weigh:    2,
 		Password: "",
 	}
-	// conf[1] = spruce.DCSConfig{
-	//	Name:     "node",
-	//	Ip:       "192.168.0.114:82",
-	//	Weigh:    1,
-	//	Password: "",
-	// }
+	conf[1] = spruce.DNode{
+		Name:     "node",
+		Ip:       "192.168.0.114:82",
+		Weigh:    1,
+		Password: "",
+	}
 	spruce.StartSpruceDistributed(spruce.Config{
 		ConfigType:    spruce.MEMORY,
 		DCSConfigFile: "",
-		DCSConfigs:    conf,
+		DNode:         conf,
 		Addr:          ":6998",
 		NowIP:         "127.0.0.1:6999",
-		KeepAlive:     true,
+		KeepAlive:     false,
 		IsBackup:      false,
 	})
 }
@@ -101,31 +103,6 @@ func TestClock(t *testing.T) {
 		fmt.Println("456")
 	})
 	n.Start()
-}
-func TestDIS4(t *testing.T) {
-	conf := make([]spruce.DCSConfig, 2)
-	conf[0] = spruce.DCSConfig{
-		Name:     "master",
-		Ip:       "192.168.0.105:82",
-		Weigh:    2,
-		Password: "",
-	}
-	conf[1] = spruce.DCSConfig{
-		Name:     "node",
-		Ip:       "192.168.0.114:82",
-		Weigh:    1,
-		Password: "",
-	}
-
-	spruce.StartSpruceDistributed(spruce.Config{
-		ConfigType:    spruce.MEMORY,
-		DCSConfigFile: "",
-		DCSConfigs:    conf,
-		Addr:          ":82",
-		NowIP:         "192.168.0.114:82",
-		KeepAlive:     false,
-		IsBackup:      false,
-	})
 }
 func TestSplit(t *testing.T) {
 	t.Log(spruce.SplitString([]byte("set**hello**word"), []byte("**")))

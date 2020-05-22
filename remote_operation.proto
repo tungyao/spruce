@@ -1,0 +1,30 @@
+syntax="proto3";
+package spruce;
+service Operation {
+  rpc Get(OperationArgs) returns (Result){}
+  rpc Set(OperationArgs) returns (SetResult){}
+  rpc Delete(OperationArgs) returns (DeleteResult){}
+}
+message OperationArgs{
+  bytes Key =1;
+  bytes Value =2;
+  int64 Expiration=3;
+}
+message Result{
+  bytes Value=1;
+}
+message SetResult{
+  int64 Position=1;
+}
+message DeleteResult{
+  bytes Value=1;
+}
+service Watcher {
+  rpc Pong(WatcherData) returns (WatcherResult){}
+}
+message WatcherData{
+  int64 Time=1;
+}
+message WatcherResult{
+  int64 Res =1;
+}
