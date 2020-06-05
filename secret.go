@@ -9,6 +9,8 @@ import (
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/forgoer/openssl"
 )
 
 func getRandomInt(start, end int) int {
@@ -37,35 +39,27 @@ func CreateLocalPWD() []byte {
 	}
 	return outs
 }
-func Encrypt(string2 []byte) []byte {
+func Encrypt(text []byte) ([]byte, error) {
 	fs, err := os.OpenFile("./pass.ewm", os.O_RDONLY|os.O_CREATE, 666)
 	if err != nil {
-		log.Panicln(err)
-		return nil
+		return nil, err
 	}
 	defer fs.Close()
 	n1, err := ioutil.ReadAll(fs)
-	if len(n1) == 0 || err != nil {
-		log.Panicln("There is no password in the document", err)
-	}
-
-	for k, v := range string2 {
-		string2[k] = v + n1[len(n1)-1%int(v)]
-	}
-	return string2
+	return openssl.AesECBDecrypt(text, n1, openssl.PKCS7_PADDING)
 }
 
-func Decrypt(s []byte) []byte {
+func Decrypt(s []byte) ([]byte, error) {
 	fs, err := os.OpenFile("./pass.ewm", os.O_RDONLY|os.O_CREATE, 666)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 	defer fs.Close()
 	n1, err := ioutil.ReadAll(fs)
-	for k, v := range s {
-		s[k] = v - n1[len(n1)-1%int(v)]
+	if err != nil {
+		return nil, err
 	}
-	return s
+	return openssl.AesECBDecrypt(s, n1, openssl.PKCS7_PADDING)
 }
 func MD5(b []byte) []byte {
 	m := md5.New()

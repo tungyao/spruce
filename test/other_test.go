@@ -8,7 +8,7 @@ import (
 )
 
 func TestOther(t *testing.T) {
-	s := spruce.Encrypt([]byte("hello wolrd"))
+	s, _ := spruce.Encrypt([]byte("hello wolrd"))
 	t.Log(string(spruce.Decrypt(s)))
 	//t.Log(string(spruce.CreateLocalPWD()))
 }
@@ -59,9 +59,9 @@ func TestChannel(t *testing.T) {
 	}
 }
 func TestAfter(t *testing.T) {
-	for{
+	for {
 		fmt.Println(1)
-		<-time.After(time.Second*1)
+		<-time.After(time.Second * 1)
 	}
 }
 func init() {
@@ -74,12 +74,11 @@ func init() {
 	fmt.Println(3)
 }
 func TestOne(t *testing.T) {
-	d:=[]int{1,2,3,5}
+	d := []int{1, 2, 3, 5}
 	fmt.Println(d[:2])
 	fmt.Println(d[2:])
 	var s []int
-	s=append(s,1)
+	s = append(s, 1)
 	var m map[string]int
-	m["one"] =1
+	m["one"] = 1
 }
-

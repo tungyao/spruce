@@ -30,7 +30,7 @@ func localStorageFileRead() {
 				log.Println(err)
 			}
 			ad, _ := ioutil.ReadAll(fs)
-			ad = Decrypt(ad)
+			ad, _ = Decrypt(ad)
 			p := 0
 			for k, v := range ad {
 				if v == 0xFF {
