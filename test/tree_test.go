@@ -12,8 +12,11 @@ func Reset(trx *TreeNode) {
 		fmt.Println(trx.Parent)
 		fmt.Println(trx.Left)
 		fmt.Println(trx.Right)
-		if trx.Parent.Position < trx.Position {
-
+		// 判断有没有uncle节点
+		if trx.Parent.Right == nil { // 没有直接旋转+变色
+			t := *trx.Parent
+			*trx.Parent = *trx
+			*trx = t
 		}
 	}
 }
@@ -108,6 +111,7 @@ func insertNode(tr *TreeNode, position int, value string) *TreeNode {
 	} else {
 		tr.Right = insertNode(tr.Right, position, value)
 	}
+	Reset(tr)
 	return tr
 }
 
