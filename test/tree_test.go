@@ -1,22 +1,25 @@
 package test
 
 import (
-	"fmt"
 	"testing"
 )
 
 func Reset(trx *TreeNode) {
 	if trx.Color == 1 && trx.Left != nil && trx.Left.Color == 1 { // 去右旋
 		// 看有没有 父父节点有没有 uncle元素
-		fmt.Println(trx)
-		fmt.Println(trx.Parent)
-		fmt.Println(trx.Left)
-		fmt.Println(trx.Right)
-		// 判断有没有uncle节点
 		if trx.Parent.Right == nil { // 没有直接旋转+变色
+			if trx.Right == nil {
+				trx.Right = &TreeNode{}
+			}
 			t := *trx.Parent
-			*trx.Parent = *trx
-			*trx = t
+			t.Right = nil
+			t.Left = nil
+			l := *trx.Left
+			l.Parent = trx
+			*(trx.Parent) = *trx
+			// (*trx.Parent).Parent = t.Parent
+			*(trx.Parent).Right = t
+			*trx = l
 		}
 	}
 }
@@ -26,6 +29,8 @@ func TestTree(t *testing.T) {
 	tr.insertRBTree(tr.Node, 123, "123", nil)
 	tr.insertRBTree(tr.Node, 10, "2", nil)
 	tr.insertRBTree(tr.Node, 8, "a", nil)
+	tr.insertRBTree(tr.Node, 15, "a", nil)
+	tr.insertRBTree(tr.Node, 222, "a", nil)
 	t.Log(maxDeep(tr.Node))
 	// tr.insertRBTree(3, "3", nil)
 	// tr.insertRBTree(426, "516", nil)
